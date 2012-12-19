@@ -10,7 +10,7 @@ casc.pl -- CASC Ain't Simply CRT
 
 =head1 SYNOPSIS
 
- casc.pl --in /path/to/file.fasta --outdir /path/to/output/directory/
+ casc.pl --in /path/to/file.fasta --outdir /path/to/output/directory/ --ncpus 1
                      [--help] [--manual]
 
 =head1 DESCRIPTION
