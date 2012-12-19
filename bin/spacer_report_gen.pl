@@ -92,7 +92,6 @@ use strict;
 use Getopt::Long;
 use File::Basename;
 use Pod::Usage;
-use Bio::SeqIO;
 use List::Util qw(sum);
 use POSIX;
 use diagnostics;
@@ -162,17 +161,45 @@ if (-e $repeat) {
 }
 ## Find the Spacers that have the right sequence statistics
 
-my ($seqio_obj,$seq_obj,%seq_statistics);
-$seqio_obj = Bio::SeqIO->new(-file => "$spacer", -format => "fasta" ) or die $!;
-while ($seq_obj = $seqio_obj->next_seq){
-    $total_spacer++;
-    my $sequence = $seq_obj->seq;
-    my $seq_length = length($sequence);
-    my $header = $seq_obj->display_id;
-    my $root = $header;
-    $root =~ s/-\d{1,3}$//;
-    push @{$seq_statistics{$root}},  $seq_length;
+#my ($seqio_obj,$seq_obj,%seq_statistics);
+#$seqio_obj = Bio::SeqIO->new(-file => "$spacer", -format => "fasta" ) or die $!;
+#while ($seq_obj = $seqio_obj->next_seq){
+#    $total_spacer++;
+#    my $sequence = $seq_obj->seq;
+#    my $seq_length = length($sequence);
+#    my $header = $seq_obj->display_id;
+#    my $root = $header;
+#    $root =~ s/-\d{1,3}$//;
+#    push @{$seq_statistics{$root}},  $seq_length;
+#}
+my %seq_statistics;
+my $header = "";
+my $seq = "";
+my $lc = 0;
+open(IN, "<$spacer") || die "\n Cannot open the input spacer fasta file $spacer\n";
+while(<IN>) {
+	chomp;
+	my $line = $_;
+	if ($line =~ m/>/) {
+		unless ($lc == 0) {
+			$total_spacer++;
+			my $seq_length = length($seq);
+			my $root = $header;
+			$root =~ s/>//;
+			$root =~ s/-\d{1,3}$//;
+			push @{$seq_statistics{$root}},  $seq_length;
+		}
+		$header = $line;
+		$seq = "";
+	}
+	else {	$seq .= $line;}
+	$lc++;
 }
+my $seq_length = length($seq);
+my $root = $header;
+$root =~ s/-\d{1,3}$//;
+push @{$seq_statistics{$root}},  $seq_length;
+close(IN);
 my ($k, $v);
 while (($k, $v) = each(%seq_statistics)){
     $total_crispr++;
@@ -257,20 +284,41 @@ while (($k, $v) = each(%seq_statistics)){
     else {  print OUT "no\t\t$AVG{$f}\t\t$STD{$f}\n";}
 }
 
-$seqio_obj = Bio::SeqIO->new(-file => "$spacer", -format => "fasta" ) or die $!;
-while ($seq_obj = $seqio_obj->next_seq){
-	my $header = $seq_obj->display_id;
-	my $f = $seq_obj->display_id;
-	my $sequence = $seq_obj->seq;
-	$f =~ s/-.*//;
-	if (exists $BONAFIDE{$f}) {
-		print OUT2 ">$header\n$sequence\n";
+$header = "";
+$seq = "";
+$lc = 0;
+open(IN,"<$spacer");
+while(<IN>) {
+	chomp;
+	my $line = $_;
+	if ($line =~ m/>/) {
+		unless ($lc == 0) {	
+			my $f = $header;
+			$f =~ s/-.*//;
+			if (exists $BONAFIDE{$f}) {
+				print OUT2 ">$header\n$seq\n";
+			}
+			else {
+				print OUT3 ">$header\n$seq\n";
+			}
+		}
+		$header = $line;
+		$header =~ s/>//;
 	}
 	else {
-		print OUT3 ">$header\n$sequence\n";
+		$seq .= $line;
 	}
+	$lc++;
 }
-
+my $f = $header;
+$f =~ s/-.*//;
+if (exists $BONAFIDE{$f}) {
+	print OUT2 ">$header\n$seq\n";
+}
+else {
+	print OUT3 ">$header\n$seq\n";
+}
+close(IN);
 close(OUT);close(OUT2);close(OUT3);
 
 ##SUBROUTINES
