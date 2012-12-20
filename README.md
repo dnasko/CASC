@@ -1,8 +1,23 @@
-CASC: A CRISPR Detection Program
-================================
+CASC: A CRISPR Detection Tool
+=============================
 
 Welcome to CASC, an all-in-one CRISPR detection and validation
 program designed for use on metagenomic or genomic reads or contigs.
+
+CASC, short for: "CASC Ain't Simply CRT", is a tool which will utilize
+a modified version of the CRISPR Recognition Tool (CRT) to call putative
+CRISPR spacers. CASC will then go on to leverage two BLAST databases
+to help validate these spacers in an effort to reduce the high
+false-positive rate.
+
+If your input FASTA file does infact contain CRISPR spacer, CASC will
+output three files:
+
+  * A FASTA file containing 'bona fide' or 'valid' CRISPR Spacers
+  
+  * A FASTA file containing 'non-bona fide' or 'non-valid' CRISPR Spacers (i.e. those appearing to be false-positive from CRT)
+  
+  * A summary report
 
 This document contains the information needed to download, install,
 and start using CASC.
