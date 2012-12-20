@@ -30,9 +30,7 @@ Once you have downloaded the repository you should see two files and two directo
   
   * `/bin` contains two programs: a report generator (written in Perl) and a modified version of CRT (written in Java)
 
-### CASC HAS ONLY ONE DEPENDENCY, and it's BLAST. You will need to have a
-local copy of BLAST installed on your machine, and have you PATH pointing
-to it. ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
+### CASC HAS ONLY ONE DEPENDENCY, and it's BLAST. You will need to have a local copy of BLAST installed on your machine, and have you PATH pointing to it. ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 
 Assuming you have Perl installed on your machine (and BLAST) you need only
 to execute the following command to display CASC's help / usage:
@@ -55,3 +53,24 @@ will only use 1 CPU. In this example we are saving to a new folder on our home
 directory and using 2 CPUs:
 
     perl casc.pl --in /Path/to/TestSeqs.nuc.fasta --outdir /home/dnasko/NewOutput/ -ncpus 2
+
+[4] Citations
+-------------
+
+CASC would not be possible without the help of others who have written some
+very nice software and performed exceptional research. CASC uses a modified
+version of the CRISPR Recognition Tool (CRT). From there, CASC will then
+validate these putative spacers by using a BLAST homology search against the
+CRISPR Finder Repeat Database. Lastly a final BLASTX is performed against all
+UniRef100P clusters which represent CRISPR-associated proteins (Cas). All of
+these citations are included below:
+
+  * Bland C, Ramsey TL, Sabree F, Lowe M, Brown K, Kyrpides NC, Hugenholtz P: CRISPR Recognition Tool (CRT): a tool for automatic detection of clustered regularly interspaced palindromic repeats. BMC Bioinformatics. 2007 Jun 18;8(1):209
+
+  * The CRISPRdb database and tools to display CRISPRs and to generate dictionaries of spacers and repeats. BMC Bioinformatics. 2007 May 23;8(1):172
+  
+  * Zheng Zhang, Scott Schwartz, Lukas Wagner, and Webb Miller (2000), "A greedy algorithm for aligning DNA sequences", J Comput Biol 2000; 7(1-2):203-14.
+  
+  * Suzek,B.E., Huang,H., McGarvey,P., Mazumder,R. and Wu,C.H. (2007) UniRef: comprehensive and non-Redundant UniProt reference clusters. Bioinformatics, 23, 1282Ð1288.
+
+Enjoy!

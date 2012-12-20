@@ -226,7 +226,9 @@ while (($k, $v) = each(%seq_statistics)){
 
 ## Begin printing report...
 
-print OUT "LIBRARY: $library_name
+print OUT "CASC 1.0
+
+LIBRARY: $library_name
 Number of Sequences.....................$total_seq
 Number of Bases.........................$total_base
 Bases per Sequence......................$base_per_seq
@@ -319,6 +321,22 @@ else {
 	print OUT3 ">$header\n$seq\n";
 }
 close(IN);
+print OUT qq|
+REFERENCES:
+Bland C, Ramsey TL, Sabree F, Lowe M, Brown K, Kyrpides NC, Hugenholtz P:
+	CRISPR Recognition Tool (CRT): a tool for automatic detection of
+	clustered regularly interspaced palindromic repeats. BMC
+	Bioinformatics. 2007 Jun 18;8(1):209
+The CRISPRdb database and tools to display CRISPRs and to generate
+	dictionaries of spacers and repeats. BMC Bioinformatics.
+	2007 May 23;8(1):172
+Zheng Zhang, Scott Schwartz, Lukas Wagner, and Webb Miller (2000), "A greedy
+	algorithm for aligning DNA sequences", J Comput Biol 2000; 7(1-2):203-14.
+Suzek,B.E., Huang,H., McGarvey,P., Mazumder,R. and Wu,C.H. (2007) UniRef:
+	comprehensive and non-Redundant UniProt reference clusters. Bioinformatics,
+	23, 1282Ð1288.
+|;
+
 close(OUT);close(OUT2);close(OUT3);
 
 ##SUBROUTINES
