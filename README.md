@@ -40,6 +40,6 @@ Say you have a recently sequenced genome, or well assembled metagenomic reads sa
 
     perl casc.pl --in /Path/to/TestSeqs.nuc.fasta
 
-CASC does coem with two optional arguments, allowing you to explcitly specify where the output files will be saved, as well as how many CPUs you would like to use. By default outputs are saved in your current working directory, and you will only use 1 CPU. In this example we are saving to a new folder on our home directory and using 2 CPUs:
+CASC does come with two optional arguments, allowing you to explicitly specify where the output files will be saved, as well as how many CPUs you would like to use. By default outputs are saved in your current working directory, and you will only use 1 CPU. In this example we are saving to a new folder on our home directory and using 2 CPUs:
 
     perl casc.pl --in /Path/to/TestSeqs.nuc.fasta --outdir /home/dnasko/NewOutput/ -ncpus 2
