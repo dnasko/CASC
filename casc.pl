@@ -241,7 +241,7 @@ $report_string .= "-o $outdir/$infile_root";
 print `$report_string`;
 print "COMPLETE\n\n";
 
-
+print "\n\n Final output files saved to: $outdir\n\n";
 
 
 
