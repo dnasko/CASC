@@ -19,10 +19,15 @@ To download, simply pull the CASC repository from GitHub. If you do not know how
 
 Once you have downloaded the repository you should see two files and two directories:
 
+  * `casc.pl` the executable Perl script.
+
+  * `README.md` the readme that you're reading now
+
   * `/BlastDBs` contains two BLAST databases which are used to validate CRISPR calls
   
   * `/bin` contains two programs: a report generator (written in Perl) and a modified version of CRT (written in Java)
-  
-  * `README.md` the readme that you're reading now
-  
-  * `casc.pl` the executable Perl script.
+
+Assuming you have Perl installed on your machine you need only to execute the following command to display CASC's help / usage display:
+
+    perl casc.pl --help
+
