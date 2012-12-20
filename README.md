@@ -10,9 +10,10 @@ and start using CASC.
 [1] Downloading and Installing CASC
 -----------------------------------
 
-NOTE: CASC has designed (and therefore will only work) on UNIX-based
-operating systems (e.g. Mac OS, Linux). Future versions will be Windows
-friendly (hopefully).
+### NOTE: CASC has designed (and therefore will only work) on UNIX-based
+### operating systems (e.g. Mac OS, Linux). Future versions will be Windows
+### friendly (hopefully).
 
-To install, simply pull the repository from GitHub
+To install, simply pull the repository from GitHub:
+
     git pull CASC
