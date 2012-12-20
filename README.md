@@ -33,3 +33,10 @@ Assuming you have Perl installed on your machine (and BLAST) you need only to ex
 
     perl casc.pl --help
 
+[3] Using CASC to Find CRISPRs
+------------------------------
+
+Say you have a recently sequenced genome, or well assembled metagenomic reads saved in a file `TestSeqs.nuc.fasta` and you would like to find CRISPR spacers within this genome or library. You would execute the following:
+
+    perl casc.pl -i /Path/to/TestSeqs.nuc.fasta
+
