@@ -27,7 +27,9 @@ Once you have downloaded the repository you should see two files and two directo
   
   * `/bin` contains two programs: a report generator (written in Perl) and a modified version of CRT (written in Java)
 
-Assuming you have Perl installed on your machine you need only to execute the following command to display CASC's help / usage display:
+### CASC HAS ONLY ONE DEPENDENCY, and it's BLAST. You will need to have a local copy of BLAST installed on your machine, and have you PATH pointing to it. ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
+
+Assuming you have Perl installed on your machine (and BLAST) you need only to execute the following command to display CASC's help / usage:
 
     perl casc.pl --help
 
