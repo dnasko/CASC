@@ -98,7 +98,7 @@ use diagnostics;
 
 
 #ARGUMENTS WITH NO DEFAULT
-my($fasta,$repeat,$cas,$spacer,$outfile,$help,$manual);
+my($fasta,$repeat,$cas,$spacer,$outfile,$version,$help,$manual);
 
 GetOptions (	
 				"f|fasta=s"	=>	\$fasta,
@@ -106,6 +106,7 @@ GetOptions (
                                 "s|spacer=s"    =>      \$spacer,
                                 "r|repeat=s"    =>      \$repeat,
                                 "c|cas=s"       =>      \$cas,
+				"v|version=s"	=>	\$version,
 				"h|help"	=>	\$help,
 				"m|manual"	=>	\$manual);
 
@@ -122,7 +123,7 @@ my $total_seq = `fgrep -c ">" $fasta`;chomp($total_seq);
 my $total_base = `fgrep -v ">" $fasta | wc -m`;
 my $base_per_seq = &Round($total_base/$total_seq, 3);
 $total_base = $total_base - $total_seq;
-my $rpt_outfile = $outfile . ".report";
+my $rpt_outfile = $outfile . ".report.txt";
 my $bon_outfile	= $outfile . ".bonafied.spacer.fasta";
 my $nb_outfile	= $outfile . ".nonbonafied.spacer.fasta";
 
@@ -226,7 +227,7 @@ while (($k, $v) = each(%seq_statistics)){
 
 ## Begin printing report...
 
-print OUT "CASC 1.0
+print OUT "CASC $version
 
 LIBRARY: $library_name
 Number of Sequences.....................$total_seq
