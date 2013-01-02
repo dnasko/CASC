@@ -300,9 +300,11 @@ while(<IN>) {
 			$f =~ s/-.*//;
 			if (exists $BONAFIDE{$f}) {
 				print OUT2 ">$header\n$seq\n";
+				$seq = "";
 			}
 			else {
 				print OUT3 ">$header\n$seq\n";
+				$seq = "";
 			}
 		}
 		$header = $line;
