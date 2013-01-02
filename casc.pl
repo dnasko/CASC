@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 # MANUAL FOR casc.pl
 
@@ -71,12 +71,13 @@ usage <http://bioinformatics.udel.edu/Core/Acknowledge>.
 
 =cut
 
-
 use strict;
 use Getopt::Long;
 use File::Basename;
 use Pod::Usage;
 use Cwd 'abs_path';
+my $script_working_dir = abs_path($0); $script_working_dir =~ s/casc.pl//; ## Format script's working directory
+use lib "$script_working_dir/bin/lib";
 use Term::ProgressBar 2.0;
 my $version = "1.0";
 
@@ -111,10 +112,6 @@ my $DATE = dateTime();
 ## Format the infile's root
 my $infile_root = $infile;
 $infile_root =~ s/^.*\///; $infile_root =~ s/\..*//;
-
-## Format script's working directory
-my $script_working_dir = abs_path($0);
-$script_working_dir =~ s/casc.pl//;
 
 ## If user did not specify an output directory, set up the default
 if ($outdir =~ "./casc_output/") {
