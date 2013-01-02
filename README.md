@@ -25,9 +25,8 @@ and start using CASC.
 [1] Downloading CASC
 --------------------
 
-### NOTE: CASC was written on Mac OS, and therefore will only work on 
-UNIX-based operating systems (e.g. Mac OS, Linux). Future versions will
-be Windows friendly (hopefully).
+### NOTE: CASC was written on Mac OS, and therefore will only work on UNIX-based operating systems (e.g. Mac OS, Linux).
+Future versions will be Windows friendly (hopefully).
 
 To download, simply pull the CASC repository from GitHub. If you do not
 know how to do this see https://help.github.com/articles/using-pull-requests
