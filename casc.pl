@@ -72,12 +72,13 @@ usage <http://bioinformatics.udel.edu/Core/Acknowledge>.
 =cut
 
 use strict;
+use warnings;
 use Getopt::Long;
 use File::Basename;
 use Pod::Usage;
+use FindBin;
 use Cwd 'abs_path';
-my $script_working_dir = abs_path($0); $script_working_dir =~ s/casc.pl//; ## Format script's working directory
-use lib "$script_working_dir/bin/lib";
+use lib abs_path("$FindBin::Bin/bin/lib");
 use Term::ProgressBar 2.0;
 my $version = "1.0";
 
@@ -105,6 +106,9 @@ my %SPACER_ID;
 ## Check to see if BLAST installed and in the user's PATH
 my $BLASTN = `which blastn`; unless ($BLASTN =~ m/blastn/) {	die "\nERROR!\n External dependency 'blastn' (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/) not installed in system PATH\n";}
 my $BLASTX = `which blastx`; unless ($BLASTX =~ m/blastx/) {	die "\nERROR!\n External dependency 'blastx' (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/) not installed in system PATH\n";}
+
+## Format script's working directory
+my $script_working_dir = $FindBin::Bin;
 
 ## What time is it?
 my $DATE = dateTime();
