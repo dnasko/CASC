@@ -324,7 +324,10 @@ else {
 	print OUT3 ">$header\n$seq\n";
 }
 close(IN);
-print OUT qq|
+print OUT qq{
++---------------------------------------------------------------------------------+
+|                               END OF REPORT                                     |
++---------------------------------------------------------------------------------+
 REFERENCES:
 Bland C, Ramsey TL, Sabree F, Lowe M, Brown K, Kyrpides NC, Hugenholtz P:
 	CRISPR Recognition Tool (CRT): a tool for automatic detection of
@@ -333,12 +336,12 @@ Bland C, Ramsey TL, Sabree F, Lowe M, Brown K, Kyrpides NC, Hugenholtz P:
 The CRISPRdb database and tools to display CRISPRs and to generate
 	dictionaries of spacers and repeats. BMC Bioinformatics.
 	2007 May 23;8(1):172
-Zheng Zhang, Scott Schwartz, Lukas Wagner, and Webb Miller (2000), "A greedy
-	algorithm for aligning DNA sequences", J Comput Biol 2000; 7(1-2):203-14.
+S.F. Altschul, W. Gish, W. Miller, E.W. Myers, D.J. Lipman, Basic local 
+        alignment search tool, J. Mol. Biol. 215 (1990) 403–410.
 Suzek,B.E., Huang,H., McGarvey,P., Mazumder,R. and Wu,C.H. (2007) UniRef:
 	comprehensive and non-Redundant UniProt reference clusters. Bioinformatics,
-	23, 1282�1288.
-|;
+	23, 1282Ð1288.
+};
 
 close(OUT);close(OUT2);close(OUT3);
 

@@ -68,7 +68,15 @@ directory and using 2 CPUs:
 
     ./CASC --in /Path/to/TestSeqs.nuc.fasta --outdir /home/dnasko/NewOutput/ -ncpus 2
 
-[4] Citations
+[4] Version History
+
+CASC is routinely updated in an effort to assure that you are validating CRISPRs
+with the most up-to-date versions of UniRef and CRISPR DB:
+
+     Version 1.1 (16Mar2013) -- [CRISPR DB 29Jan2013] [UniRef 16 Mar 2013]
+     Version 1.0 (19Dec2012) -- Initial Version
+
+[5] Citations
 -------------
 
 CASC would not be possible without the help of others who have written some
@@ -79,12 +87,12 @@ CRISPR Finder Repeat Database. Lastly a final BLASTX is performed against all
 UniRef100P clusters which represent CRISPR-associated proteins (Cas). All of
 these citations are included below:
 
-  * Bland C, Ramsey TL, Sabree F, Lowe M, Brown K, Kyrpides NC, Hugenholtz P: CRISPR Recognition Tool (CRT): a tool for automatic detection of clustered regularly interspaced palindromic repeats. BMC Bioinformatics. 2007 Jun 18;8(1):209
+  * Bland C, Ramsey TL, Sabree F, Lowe M, Brown K, Kyrpides NC, Hugenholtz P: CRISPR Recognition Tool (CRT): a tool for automatic detection of clustered regularly interspaced palindromic repeats. BMC Bioinformatics. 2007 Jun 18;8(1):209.
 
-  * The CRISPRdb database and tools to display CRISPRs and to generate dictionaries of spacers and repeats. BMC Bioinformatics. 2007 May 23;8(1):172
+  * The CRISPRdb database and tools to display CRISPRs and to generate dictionaries of spacers and repeats. BMC Bioinformatics. 2007 May 23;8(1):172.
   
-  * Zheng Zhang, Scott Schwartz, Lukas Wagner, and Webb Miller (2000), "A greedy algorithm for aligning DNA sequences", J Comput Biol 2000; 7(1-2):203-14.
+  * S.F. Altschul, W. Gish, W. Miller, E.W. Myers, D.J. Lipman, Basic local alignment search tool, J. Mol. Biol. 215 (1990) 403–410.
   
-  * Suzek,B.E., Huang,H., McGarvey,P., Mazumder,R. and Wu,C.H. (2007) UniRef: comprehensive and non-Redundant UniProt reference clusters. Bioinformatics, 23, 1282�1288.
+  * Suzek,B.E., Huang,H., McGarvey,P., Mazumder,R. and Wu,C.H. (2007) UniRef: comprehensive and non-Redundant UniProt reference clusters. Bioinformatics, 23, 1282Ð1288.
 
 Enjoy!

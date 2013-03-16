@@ -80,7 +80,7 @@ use FindBin;
 use Cwd 'abs_path';
 use lib abs_path("$FindBin::Bin/bin/lib");
 use Term::ProgressBar 2.0;
-my $version = "1.0";
+my $version = "1.1";
 
 ## ARGUMENTS WITH NO DEFAULT
 my($infile,$help,$manual);
@@ -189,9 +189,9 @@ $progress->update(42);
 
 ## Perform a BLASTn of the repeats of putative spacers
 my $blastn_string = "blastn -query $outdir/component_processes/mCRT/$infile_root.repeat.fsa ";
-$blastn_string .= "-db $script_working_dir/BlastDBs/CrFinderRepeatDB.fsa ";
+$blastn_string .= "-db $script_working_dir/BlastDBs/CrFinderRepeatDB_29Jan13 ";
 $blastn_string .= "-out $outdir/component_processes/blastn/$infile_root.btab ";
-$blastn_string .= "-evalue 1e-4 ";
+$blastn_string .= "-evalue 1e-5 ";
 $blastn_string .= "-word_size 4 ";
 $blastn_string .= "-outfmt 6 ";
 $blastn_string .= "-num_threads $ncpus ";
@@ -201,7 +201,7 @@ $progress->update(56);
 
 ## Perform a BLASTx of original sequences with putative spacers to find Cas proteins upstream
 my $blastx_string = "blastx -query $outdir/component_processes/extract_sequence/$infile_root.fasta ";
-$blastx_string .= "-db $script_working_dir/BlastDBs/UniRef-CrisprAssociated.100.fsa ";
+$blastx_string .= "-db $script_working_dir/BlastDBs/UniRef_CAS_16Mar13 ";
 $blastx_string .= "-out $outdir/component_processes/blastx/$infile_root.btab ";
 $blastx_string .= "-evalue 1e-5 ";
 $blastx_string .= "-outfmt 6 ";
