@@ -128,10 +128,6 @@ if ($outdir =~ "./casc_output/") {
 
 ## Create the output directories
 print `mkdir -p $outdir`;
-print `mkdir -p $outdir/component_processes/blastn`;
-print `mkdir -p $outdir/component_processes/blastx`;
-print `mkdir -p $outdir/component_processes/bonafide_lookup`;
-print `mkdir -p $outdir/component_processes/extract_sequence`;
 print `mkdir -p $outdir/component_processes/mCRT`;
 
 ##################################################
@@ -149,8 +145,15 @@ print `java -jar $script_working_dir/bin/mCRT1.5.jar $infile $outdir/component_p
 print `mv *.repeat.fsa $outdir/component_processes/mCRT`;
 print `mv *.spacer.fsa $outdir/component_processes/mCRT`;
 my $putative_spacers = `fgrep -c ">" $outdir/component_processes/mCRT/$infile_root.spacer.fsa`; chomp($putative_spacers);
-if ($putative_spacers == 0) {	$progress->update($MAX); die "\n\n There were no putative spacers found in $infile\n CASC Complete\n\n";}
+if ($putative_spacers == 0) {	$progress->update($MAX); die my $death = death(); print $death;}
+
 else {	$progress->update(28);}
+
+## Create Remaining Output Directories
+print `mkdir -p $outdir/component_processes/blastn`;
+print `mkdir -p $outdir/component_processes/blastx`;
+print `mkdir -p $outdir/component_processes/bonafide_lookup`;
+print `mkdir -p $outdir/component_processes/extract_sequence`;
 
 ## Extract the original sequences of putative spacers
 open(IN,"<$outdir/component_processes/mCRT/$infile_root.spacer.fsa") || die "\n Cannot open the spacer file $outdir/component_processes/mCRT/$infile_root.spacer.fsa\n\n";
@@ -252,7 +255,9 @@ $report_string .= "-o $outdir/$infile_root";
 print `$report_string`;
 $progress->update($MAX);
 
-print "\n\n Final output files saved to: $outdir\n CASC Complete\n\n";
+print "\n\n Final output files saved to: $outdir\n";
+my $suc_complete = complete();
+print $suc_complete;
 
 
 ##################################################
@@ -272,6 +277,43 @@ sub dateTime
     $date .= $timeDate[5] . "_" . $month{$timeDate[4]} . "_" . $timeDate[3] . "_";
     $date .= $timeDate[2] . $timeDate[1];
     return $date;
+}
+sub death
+{
+    my $death = q{
+
+ There were no putative spacers found in /Users/dnasko/Desktop/81473_0_1713.fasta
+ Outputs have been written to ./casc_output/81473_0_1713-2013_Mar_16_1727/
+
+   _  ______    ________  ___________  ___                
+  / |/ / __ \  / ___/ _ \/  _/ __/ _ \/ _ \___            
+ /    / /_/ / / /__/ , _// /_\ \/ ___/ , _(_-<  _   _   _ 
+/_/|_/\____/  \___/_/|_/___/___/_/  /_/|_/___/ (_) (_) (_)
+                                                                                                        
+  ________   _________  _____                __    __     
+ / ___/ _ | / __/ ___/ / ___/__  __ _  ___  / /__ / /____ 
+/ /__/ __ |_\ \/ /__  / /__/ _ \/  ' \/ _ \/ / -_) __/ -_)
+\___/_/ |_/___/\___/  \___/\___/_/_/_/ .__/_/\__/\__/\__/ 
+                                    /_/                   
+
+};
+return $death;
+}
+sub complete
+{
+    my $successful_complete = q{
+   ___ ___ ___ ___ ___ ___       ___                 _ 
+  / __| _ \_ _/ __| _ \ _ \ ___ | __|__ _  _ _ _  __| |
+ | (__|   /| |\__ \  _/   /(_-< | _/ _ \ || | ' \/ _` |
+  \___|_|_\___|___/_| |_|_\/__/ |_|\___/\_,_|_||_\__,_|
+                                                       
+  ________   _________  _____                __    __     
+ / ___/ _ | / __/ ___/ / ___/__  __ _  ___  / /__ / /____ 
+/ /__/ __ |_\ \/ /__  / /__/ _ \/  ' \/ _ \/ / -_) __/ -_)
+\___/_/ |_/___/\___/  \___/\___/_/_/_/ .__/_/\__/\__/\__/ 
+                                    /_/   
+
+};
 }
 
 
