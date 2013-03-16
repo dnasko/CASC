@@ -69,6 +69,7 @@ directory and using 2 CPUs:
     ./CASC --in /Path/to/TestSeqs.nuc.fasta --outdir /home/dnasko/NewOutput/ -ncpus 2
 
 [4] Version History
+-------------------
 
 CASC is routinely updated in an effort to assure that you are validating CRISPRs
 with the most up-to-date versions of UniRef and CRISPR DB:
