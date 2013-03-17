@@ -79,6 +79,7 @@ use Pod::Usage;
 use FindBin;
 use Cwd 'abs_path';
 use lib abs_path("$FindBin::Bin/bin/lib");
+use lib abs_path("$FindBin::Bin/bin/lib_linux/lib64/perl5/");
 use Term::ProgressBar 2.0;
 my $version = "1.1";
 

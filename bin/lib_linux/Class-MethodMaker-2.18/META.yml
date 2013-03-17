@@ -1,0 +1,24 @@
+--- #YAML:1.0
+name:               Class-MethodMaker
+version:            2.18
+abstract:           a module for creating generic methods
+author:
+    - Martyn J. Pearce
+license:            perl
+distribution_type:  module
+configure_requires:
+    ExtUtils::MakeMaker:  0
+build_requires:
+    ExtUtils::MakeMaker:  0
+requires:
+    perl:  5.006
+resources:
+    repository:  http://github.com/renormalist/class-methodmaker
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version 6.5601
+meta-spec:
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4

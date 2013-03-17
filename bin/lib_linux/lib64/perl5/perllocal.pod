@@ -1,0 +1,22 @@
+=head2 Sat Mar 16 23:46:05 2013: C<Module> L<Class::MethodMaker|Class::MethodMaker>
+
+=over 4
+
+=item *
+
+C<installed into: /home/dnasko/software/CASC/bin/lib2//share/perl5>
+
+=item *
+
+C<LINKTYPE: dynamic>
+
+=item *
+
+C<VERSION: 2.18>
+
+=item *
+
+C<EXE_FILES: >
+
+=back
+
