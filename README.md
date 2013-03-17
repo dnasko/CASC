@@ -74,6 +74,7 @@ directory and using 2 CPUs:
 CASC is routinely updated in an effort to assure that you are validating CRISPRs
 with the most up-to-date versions of UniRef and CRISPR DB:
 
+     Version 1.2 (17Mar2013) -- Linux compatibility improved
      Version 1.1 (16Mar2013) -- [CRISPR DB 29Jan2013] [UniRef 16 Mar 2013]
      Version 1.0 (19Dec2012) -- Initial Version
 

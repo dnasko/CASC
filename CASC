@@ -79,9 +79,7 @@ use Pod::Usage;
 use FindBin;
 use Cwd 'abs_path';
 use lib abs_path("$FindBin::Bin/bin/lib");
-use lib abs_path("$FindBin::Bin/bin/lib_linux/lib64/perl5/");
-use Term::ProgressBar 2.0;
-my $version = "1.1";
+my $version = "1.2";
 
 ## ARGUMENTS WITH NO DEFAULT
 my($infile,$help,$manual);
@@ -136,8 +134,8 @@ print `mkdir -p $outdir/component_processes/mCRT`;
 ##################################################
 ## Initialze
 print "\n\n CASC Ain't Simply CRT\n version $version\n\n";
-my $progress = Term::ProgressBar->new($MAX);
-$progress->update(14);
+progress_bar( 1, $MAX, 50, '=' );
+progress_bar( 14, $MAX, 50, '=' );
 
 ## Run mCRT to Call Putative CRISPR Spacers
 open(IN,"<$infile") || die "\n\n Cannot open the input file $infile\n\n !!! CASC EXITING UNSUCCESSFULLY !!!\n\n";
@@ -146,9 +144,9 @@ print `java -jar $script_working_dir/bin/mCRT1.5.jar $infile $outdir/component_p
 print `mv *.repeat.fsa $outdir/component_processes/mCRT`;
 print `mv *.spacer.fsa $outdir/component_processes/mCRT`;
 my $putative_spacers = `fgrep -c ">" $outdir/component_processes/mCRT/$infile_root.spacer.fsa`; chomp($putative_spacers);
-if ($putative_spacers == 0) {	$progress->update($MAX); die my $death = death(); print $death;}
+if ($putative_spacers == 0) {	progress_bar( $MAX, 100, 50, '=' ); die my $death = death(); print $death;}
 
-else {	$progress->update(28);}
+else {	progress_bar( 28, $MAX, 50, '=' );}
 
 ## Create Remaining Output Directories
 print `mkdir -p $outdir/component_processes/blastn`;
@@ -189,7 +187,7 @@ while(<IN>) {
 }
 close(IN);
 close(OUT);
-$progress->update(42);
+progress_bar( 42, $MAX, 50, '=' );
 
 ## Perform a BLASTn of the repeats of putative spacers
 my $blastn_string = "blastn -query $outdir/component_processes/mCRT/$infile_root.repeat.fsa ";
@@ -201,7 +199,7 @@ $blastn_string .= "-outfmt 6 ";
 $blastn_string .= "-num_threads $ncpus ";
 
 print `$blastn_string`;
-$progress->update(56);
+progress_bar( 56, $MAX, 50, '=' );
 
 ## Perform a BLASTx of original sequences with putative spacers to find Cas proteins upstream
 my $blastx_string = "blastx -query $outdir/component_processes/extract_sequence/$infile_root.fasta ";
@@ -211,7 +209,7 @@ $blastx_string .= "-evalue 1e-5 ";
 $blastx_string .= "-outfmt 6 ";
 $blastx_string .= "-num_threads $ncpus ";
 print `$blastx_string`;
-$progress->update(70);
+progress_bar( 70, $MAX, 50, '=' );
 
 ## Create list of bonafide spacer arrays from the repeat BLAST and Cas BLAST
 open(OUT,">$outdir/component_processes/bonafide_lookup/$infile_root.repeat.lookup");
@@ -243,7 +241,7 @@ while(<IN>) {
 }
 close(IN);
 close(OUT);
-$progress->update(84);
+progress_bar( 84, $MAX, 50, '=' );
 
 ## Run the report generator
 my $report_string = "perl $script_working_dir/bin/spacer_report_gen.pl ";
@@ -254,9 +252,8 @@ $report_string .= "-s $outdir/component_processes/mCRT/$infile_root.spacer.fsa "
 $report_string .= "-v $version ";
 $report_string .= "-o $outdir/$infile_root";
 print `$report_string`;
-$progress->update($MAX);
+progress_bar( $MAX, $MAX, 50, '=' );
 
-print "\n\n Final output files saved to: $outdir\n";
 my $suc_complete = complete();
 print $suc_complete;
 
@@ -279,25 +276,28 @@ sub dateTime
     $date .= $timeDate[2] . $timeDate[1];
     return $date;
 }
+sub progress_bar
+{
+    my ( $got, $total, $width, $char ) = @_;
+    $width ||= 25;
+    $char  ||= '=';
+    my $num_width = length $total;
+    local $| = 1;
+    printf "|%-${width}s| (%.2f%%)\r", 
+        $char x (($width-1)*$got/$total). '>', $got, $total, 100*$got/
+	    +$total;
+}
 sub death
 {
     my $death = q{
 
- There were no putative spacers found in /Users/dnasko/Desktop/81473_0_1713.fasta
- Outputs have been written to ./casc_output/81473_0_1713-2013_Mar_16_1727/
-
-   _  ______    ________  ___________  ___                
-  / |/ / __ \  / ___/ _ \/  _/ __/ _ \/ _ \___            
- /    / /_/ / / /__/ , _// /_\ \/ ___/ , _(_-<  _   _   _ 
-/_/|_/\____/  \___/_/|_/___/___/_/  /_/|_/___/ (_) (_) (_)
-                                                                                                        
-  ________   _________  _____                __    __     
- / ___/ _ | / __/ ___/ / ___/__  __ _  ___  / /__ / /____ 
-/ /__/ __ |_\ \/ /__  / /__/ _ \/  ' \/ _ \/ / -_) __/ -_)
-\___/_/ |_/___/\___/  \___/\___/_/_/_/ .__/_/\__/\__/\__/ 
-                                    /_/                   
-
+ . . .-.   .-. .-. .-. .-. .-. .-. .-. 
+ |\| | |   |   |(   |  `-. |-' |(  `-. 
+ ' ` `-'   `-' ' ' `-' `-' '   ' ' `-' 
+                                                                                                                              
 };
+    $death .= " There were no putative spacers found in $infile\n Outputs have been written to $outdir";
+
 return $death;
 }
 sub complete
@@ -307,14 +307,11 @@ sub complete
   / __| _ \_ _/ __| _ \ _ \ ___ | __|__ _  _ _ _  __| |
  | (__|   /| |\__ \  _/   /(_-< | _/ _ \ || | ' \/ _` |
   \___|_|_\___|___/_| |_|_\/__/ |_|\___/\_,_|_||_\__,_|
-                                                       
-  ________   _________  _____                __    __     
- / ___/ _ | / __/ ___/ / ___/__  __ _  ___  / /__ / /____ 
-/ /__/ __ |_\ \/ /__  / /__/ _ \/  ' \/ _ \/ / -_) __/ -_)
-\___/_/ |_/___/\___/  \___/\___/_/_/_/ .__/_/\__/\__/\__/ 
-                                    /_/   
+ 
 
-};
+ Final output files saved to:};
+
+    $successful_complete .= " $outdir\n\n";
 }
 
 
