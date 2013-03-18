@@ -10,7 +10,7 @@ CASC -- CASC Ain't Simply CRT
 
 =head1 SYNOPSIS
 
- CASC --in /path/to/file.fasta --outdir /path/to/output/directory/ --ncpus 1
+ CASC --in /path/to/file.fasta --outdir /path/to/output/directory/ --ncpus 1 --conservative
                      [--help] [--manual]
 
 =head1 DESCRIPTION
@@ -26,17 +26,18 @@ or genomic reads or contigs.
 
 Input file in FASTA format. (Required)
 
-=item B<-o, --outdir>=FILENAME
+=item B<-o, --outdir>=DIRECTORY_NAME
 
 Output directory where all output files will be saved. Default will be the working directory. (Optional)
-
-=item B<-c, --conservative>=INT
-
-Be conservative (1) or liberal (0) with spacer calls. Default = 0
 
 =item B<-n, --ncpus>=INT
 
 Number of CPUs to use. Default = 1 (Optional)
+
+=item B<-c, --conservative>
+
+Be conservative with spacer calls. (Optional)
+By default CASC is liberal with calls.
 
 =item B<-h, --help>
 
@@ -86,24 +87,25 @@ use lib abs_path("$FindBin::Bin/bin/lib");
 my $version = "1.2";
 
 ## ARGUMENTS WITH NO DEFAULT
-my($infile,$help,$manual);
+my($infile,$conservative,$help,$manual);
 ## ARGUMENTS WITH DEFAULT
 my $outdir = "./casc_output/";
 my $ncpus = 1;
-my $conservative = 0;
+my $calling = "Liberal";
 GetOptions (	
-				"i|in=s"	=>	\$infile,
-				"o|outdir=s"	=>	\$outdir,
-                                "c|conservative=i" =>   \$conservative,
-                                "n|ncpus=i"	=>	\$ncpus,
-				"h|help"	=>	\$help,
-				"m|manual"	=>	\$manual);
+				"i|in=s"	 =>	\$infile,
+				"o|outdir=s"	 =>	\$outdir,
+                                "c|conservative" =>     \$conservative,
+                                "n|ncpus=i"	 =>	\$ncpus,
+				"h|help"	 =>	\$help,
+				"m|manual"	 =>	\$manual);
 
 ## VALIDATE ARGS
 pod2usage(-verbose => 2)  if ($manual);
 pod2usage(-verbose => 1)  if ($help);
 pod2usage( -msg  => "\n\n ERROR!  Required argument --in not found.\n", -exitval => 2, -verbose => 1)  if (! $infile );
-pod2usage( -msg  => "\n\n ERROR!  argument --conservative is a binary flag and should be set to 0 or 1\n", -exitval => 2, -verbose => 1)  if ( $conservative != 0 && $conservative != 1 );
+if ($conservative) { $conservative = "yes";$calling = "Conservative";}
+else { $conservative = "no";}
 
 ## Global Variables
 my $MAX = 100;	## used for the progress bar
@@ -140,7 +142,8 @@ print `mkdir -p $outdir/component_processes/mCRT`;
 ##                   MAIN                       ##
 ##################################################
 ## Initialze
-print "\n\n CASC Ain't Simply CRT\n version $version\n\n";
+
+print "\n\n CASC Ain't Simply CRT\n Version: $version\n CRISPR Calling: $calling\n\n";
 progress_bar( 1, $MAX, 50, '=' );
 progress_bar( 14, $MAX, 50, '=' );
 
@@ -262,9 +265,14 @@ $report_string .= "-o $outdir/$infile_root";
 print `$report_string`;
 progress_bar( $MAX, $MAX, 50, '=' );
 
-my $suc_complete = complete();
-print $suc_complete;
-
+if (-z "$outdir/$infile_root.bonafide.spacer.fasta") {
+    my $no_bonafide = no_bonafide();
+    print $no_bonafide;
+}
+else {
+    my $suc_complete = complete();
+    print $suc_complete;
+}
 
 ##################################################
 ##                SUBROUTINES                   ##
@@ -306,7 +314,16 @@ sub death
 };
     $death .= " There were no putative spacers found in $infile\n Outputs have been written to $outdir";
 
-return $death;
+}
+sub no_bonafide
+{
+    my $no_bonafide = q{
+. . .-.   .-. .-. . . .-.   .-. .-. .-. .-.   .-. .-. .-. .-. .-. .-. .-. 
+|\| | |   |(  | | |\| |-|   |-   |  |  )|-    `-. |-' |-| |   |-  |(  `-. 
+' ` `-'   `-' `-' ' ` ` '   '   `-' `-' `-'   `-' '   ` ' `-' `-' ' ' `-'
+
+};
+$no_bonafide .= " There were no bona fide putative spacers found in $infile\n Outputs have been written to $outdir\n\n";
 }
 sub complete
 {

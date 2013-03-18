@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# MANUAL FOR spacer_stddev.pl
+# MANUAL FOR spacer_report_gen.pl
 
 =pod
 
@@ -10,7 +10,7 @@ spacer_report_gen.pl -- what it does
 
 =head1 SYNOPSIS
 
- spacer_report_gen.pl --fasta /path/to/spacers.fasta --repeat /path/to/repeat.list --cas /path/to/cas.list --out /path/to/output/root.name --setting 0
+ spacer_report_gen.pl --fasta /path/to/spacers.fasta --repeat /path/to/repeat.list --cas /path/to/cas.list --out /path/to/output/root.name --setting yes
                      [--help] [--manual]
 
 =head1 DESCRIPTION
@@ -110,7 +110,7 @@ GetOptions (
                                 "s|spacer=s"    =>      \$spacer,
                                 "r|repeat=s"    =>      \$repeat,
                                 "c|cas=s"       =>      \$cas,
-                                "x|setting=i"   =>      \$setting,
+                                "x|setting=s"   =>      \$setting,
 				"v|version=s"	=>	\$version,
 				"h|help"	=>	\$help,
 				"m|manual"	=>	\$manual);
@@ -118,7 +118,14 @@ GetOptions (
 # VALIDATE ARGS
 pod2usage(-verbose => 2)  if ($manual);
 pod2usage(-verbose => 1)  if ($help);
-pod2usage( -msg  => "ERROR!  Required argument -f and/or -r and/or -c and/or -o not found.\n", -exitval => 2, -verbose => 1)  if (! $fasta || ! $repeat || ! $cas || ! $outfile || ! $setting);
+pod2usage( -msg  => "ERROR!  Required argument -f not found.\n", -exitval => 2, -verbose => 1)  if (! $fasta );
+pod2usage( -msg  => "ERROR!  Required argument -s not found.\n", -exitval => 2, -verbose => 1)  if (! $spacer );
+pod2usage( -msg  => "ERROR!  Required argument -r not found.\n", -exitval => 2, -verbose => 1)  if (! $repeat );
+pod2usage( -msg  => "ERROR!  Required argument -c not found.\n", -exitval => 2, -verbose => 1)  if (! $cas );
+pod2usage( -msg  => "ERROR!  Required argument -o not found.\n", -exitval => 2, -verbose => 1)  if (! $outfile );
+pod2usage( -msg  => "ERROR!  Required argument -x not found.\n", -exitval => 2, -verbose => 1)  if (! $setting );
+
+
 
 ## GLOBAL VARIABLE SETUP
 my $total_spacer = 0; my $total_crispr = 0; my $total_cas = 0; my $total_repeat = 0; my $total_statistics = 0;
@@ -126,6 +133,7 @@ my (@STATISTICS,%BONAFIDE,%AVG,%STD,@CAS,@REPEAT);
 my $library_name = $fasta;$library_name =~s/.*\///;$library_name =~s/\..*//;
 my $total_seq = `fgrep -c ">" $fasta`;chomp($total_seq);
 my $total_base = `fgrep -v ">" $fasta | wc -m`;
+$total_base -= `fgrep -v ">" $fasta | wc -l`;
 my $base_per_seq = &Round($total_base/$total_seq, 3);
 $total_base = $total_base - $total_seq;
 my $rpt_outfile = $outfile . ".report.txt";
@@ -204,6 +212,7 @@ while(<IN>) {
 my $seq_length = length($seq);
 my $root = $header;
 $root =~ s/-\d{1,3}$//;
+$root =~ s/>//;
 push @{$seq_statistics{$root}},  $seq_length;
 close(IN);
 my ($k, $v);
@@ -222,7 +231,7 @@ while (($k, $v) = each(%seq_statistics)){
     $std = Round($std, 3);
     $AVG{$f} = $average;
     $STD{$f} = $std;
-    if ( $average > 19 && $std <=2 && $setting == 0 ) {
+    if ( $average > 19 && $std <=2 && $setting =~ m/no/ ) {
         push (@STATISTICS, $k);
         my $format = $k;
         $format =~ s/-.*//;
@@ -284,7 +293,7 @@ $percent = $percent * 100;
 print OUT "$percent%\n\n";
 
 ## Begin printing of the exhaustive report
-print OUT "\nEXHAUSTIVE REPORT ON PUTATIVE CRISPRs\n\nSequence\t\tCRISPR\t\tAverage\t\tStdDev\n";
+print OUT "\nEXHAUSTIVE REPORT ON PUTATIVE CRISPRs\n\nSequence\t\t\t\tCRISPR\t\tAverage\t\tStdDev\n";
 while (($k, $v) = each(%seq_statistics)){
     my $f = $k;$f =~ s/-.*//;
     print OUT "$f\t\t\t";

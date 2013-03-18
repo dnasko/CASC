@@ -34,7 +34,7 @@ know how to do this see https://help.github.com/articles/using-pull-requests
 [2] Installing CASC and its Dependencies
 ----------------------------------------
 
-Once you have downloaded the repository you should see two files and two directories:
+Once you have downloaded the repository you should see two files and three directories:
 
   * `CASC` the executable Perl script.
 
@@ -43,6 +43,8 @@ Once you have downloaded the repository you should see two files and two directo
   * `/BlastDBs` contains two BLAST databases which are used to validate CRISPR calls
   
   * `/bin` contains two programs: a report generator (written in Perl) and a modified version of CRT (written in Java)
+
+  * `/example` contains three example FASTA files to test CASC with
 
 ### CASC HAS ONLY ONE DEPENDENCY, and it's BLAST. You will need to have a local copy of BLAST installed on your machine, and have you PATH pointing to it. ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 
@@ -67,7 +69,7 @@ call. By default outputs are saved in your current working directory, you
 will only use 1 CPU, and call CRISPRs liberally. In this example we are saving
 to a new folder on our home directory, using 4 CPUs, and calling CRISPRs conservatively:
 
-    ./CASC --in=/Path/to/TestSeqs.nuc.fasta --outdir=/home/dnasko/NewOutput/ --ncpus=4 --conservative=1 
+    ./CASC --in=/Path/to/TestSeqs.nuc.fasta --outdir=/home/dnasko/NewOutput/ --ncpus=4 --conservative
 
 [4] Version History
 -------------------
