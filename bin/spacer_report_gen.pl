@@ -10,7 +10,7 @@ spacer_report_gen.pl -- what it does
 
 =head1 SYNOPSIS
 
- spacer_report_gen.pl --fasta /path/to/spacers.fasta --repeat /path/to/repeat.list --cas /path/to/cas.list --out /path/to/output/root.name
+ spacer_report_gen.pl --fasta /path/to/spacers.fasta --repeat /path/to/repeat.list --cas /path/to/cas.list --out /path/to/output/root.name --setting 0
                      [--help] [--manual]
 
 =head1 DESCRIPTION
@@ -43,6 +43,10 @@ Input file of ID's which hit known repeats. (Required)
 =item B<-c, --cas>=FILENAME
 
 Input file of ID's which have Cas upstream of CRISPR. (Required) 
+
+=item B<-x, --setting>=FILENAME
+
+Be conservative (1) or liberal (0) with spacer calls.
 
 =item B<-o, --out>=FILENAME
 
@@ -98,7 +102,7 @@ use diagnostics;
 
 
 #ARGUMENTS WITH NO DEFAULT
-my($fasta,$repeat,$cas,$spacer,$outfile,$version,$help,$manual);
+my($fasta,$repeat,$cas,$spacer,$outfile,$setting,$version,$help,$manual);
 
 GetOptions (	
 				"f|fasta=s"	=>	\$fasta,
@@ -106,6 +110,7 @@ GetOptions (
                                 "s|spacer=s"    =>      \$spacer,
                                 "r|repeat=s"    =>      \$repeat,
                                 "c|cas=s"       =>      \$cas,
+                                "x|setting=i"   =>      \$setting,
 				"v|version=s"	=>	\$version,
 				"h|help"	=>	\$help,
 				"m|manual"	=>	\$manual);
@@ -113,7 +118,7 @@ GetOptions (
 # VALIDATE ARGS
 pod2usage(-verbose => 2)  if ($manual);
 pod2usage(-verbose => 1)  if ($help);
-pod2usage( -msg  => "ERROR!  Required argument -f and/or -r and/or -c and/or -o not found.\n", -exitval => 2, -verbose => 1)  if (! $fasta || ! $repeat || ! $cas || ! $outfile);
+pod2usage( -msg  => "ERROR!  Required argument -f and/or -r and/or -c and/or -o not found.\n", -exitval => 2, -verbose => 1)  if (! $fasta || ! $repeat || ! $cas || ! $outfile || ! $setting);
 
 ## GLOBAL VARIABLE SETUP
 my $total_spacer = 0; my $total_crispr = 0; my $total_cas = 0; my $total_repeat = 0; my $total_statistics = 0;
@@ -124,8 +129,8 @@ my $total_base = `fgrep -v ">" $fasta | wc -m`;
 my $base_per_seq = &Round($total_base/$total_seq, 3);
 $total_base = $total_base - $total_seq;
 my $rpt_outfile = $outfile . ".report.txt";
-my $bon_outfile	= $outfile . ".bonafied.spacer.fasta";
-my $nb_outfile	= $outfile . ".nonbonafied.spacer.fasta";
+my $bon_outfile	= $outfile . ".bonafide.spacer.fasta";
+my $nb_outfile	= $outfile . ".nonbonafide.spacer.fasta";
 
 open(OUT,">$rpt_outfile") || die "cannot open the outfile";
 open(OUT2,">$bon_outfile") || die "cannot open the bon outfile";
@@ -217,7 +222,7 @@ while (($k, $v) = each(%seq_statistics)){
     $std = Round($std, 3);
     $AVG{$f} = $average;
     $STD{$f} = $std;
-    if ($average > 19 && $std <=2) {
+    if ( $average > 19 && $std <=2 && $setting == 0 ) {
         push (@STATISTICS, $k);
         my $format = $k;
         $format =~ s/-.*//;
@@ -323,7 +328,7 @@ if (exists $BONAFIDE{$f}) {
 else {
 	print OUT3 ">$header\n$seq\n";
 }
-close(IN);
+vclose(IN);
 print OUT qq{
 +---------------------------------------------------------------------------------+
 |                               END OF REPORT                                     |

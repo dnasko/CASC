@@ -30,7 +30,11 @@ Input file in FASTA format. (Required)
 
 Output directory where all output files will be saved. Default will be the working directory. (Optional)
 
-=item B<-n, --ncpus>=FILENAME
+=item B<-c, --conservative>=INT
+
+Be conservative (1) or liberal (0) with spacer calls. Default = 0
+
+=item B<-n, --ncpus>=INT
 
 Number of CPUs to use. Default = 1 (Optional)
 
@@ -86,17 +90,20 @@ my($infile,$help,$manual);
 ## ARGUMENTS WITH DEFAULT
 my $outdir = "./casc_output/";
 my $ncpus = 1;
+my $conservative = 0;
 GetOptions (	
 				"i|in=s"	=>	\$infile,
 				"o|outdir=s"	=>	\$outdir,
-				"n|ncpus=i"	=>	\$ncpus,
+                                "c|conservative=i" =>   \$conservative,
+                                "n|ncpus=i"	=>	\$ncpus,
 				"h|help"	=>	\$help,
 				"m|manual"	=>	\$manual);
 
 ## VALIDATE ARGS
 pod2usage(-verbose => 2)  if ($manual);
 pod2usage(-verbose => 1)  if ($help);
-pod2usage( -msg  => "ERROR!  Required argument --in not found.\n", -exitval => 2, -verbose => 1)  if (! $infile );
+pod2usage( -msg  => "\n\n ERROR!  Required argument --in not found.\n", -exitval => 2, -verbose => 1)  if (! $infile );
+pod2usage( -msg  => "\n\n ERROR!  argument --conservative is a binary flag and should be set to 0 or 1\n", -exitval => 2, -verbose => 1)  if ( $conservative != 0 && $conservative != 1 );
 
 ## Global Variables
 my $MAX = 100;	## used for the progress bar
@@ -250,6 +257,7 @@ $report_string .= "-r $outdir/component_processes/bonafide_lookup/$infile_root.r
 $report_string .= "-c $outdir/component_processes/bonafide_lookup/$infile_root.cas.lookup ";
 $report_string .= "-s $outdir/component_processes/mCRT/$infile_root.spacer.fsa ";
 $report_string .= "-v $version ";
+$report_string .= "-x $conservative ";
 $report_string .= "-o $outdir/$infile_root";
 print `$report_string`;
 progress_bar( $MAX, $MAX, 50, '=' );

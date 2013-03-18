@@ -58,15 +58,16 @@ Say you have a recently sequenced genome, or well assembled metagenomic reads
 saved in a file `TestSeqs.nuc.fasta` and you would like to find CRISPR spacers
 within this genome or library. You would execute the following:
 
-    ./CASC --in /Path/to/TestSeqs.nuc.fasta
+    ./CASC --in=/Path/to/TestSeqs.nuc.fasta
 
-CASC does come with two optional arguments, allowing you to explicitly specify
+CASC does come with three optional arguments, allowing you to explicitly specify
 where the output files will be saved, as well as how many CPUs you would like
-to use. By default outputs are saved in your current working directory, and you
-will only use 1 CPU. In this example we are saving to a new folder on our home
-directory and using 2 CPUs:
+to use, and whether or not you would like to be conservative or liberal with CRISPR
+call. By default outputs are saved in your current working directory, you
+will only use 1 CPU, and call CRISPRs liberally. In this example we are saving
+to a new folder on our home directory, using 4 CPUs, and calling CRISPRs conservatively:
 
-    ./CASC --in /Path/to/TestSeqs.nuc.fasta --outdir /home/dnasko/NewOutput/ -ncpus 2
+    ./CASC --in=/Path/to/TestSeqs.nuc.fasta --outdir=/home/dnasko/NewOutput/ --ncpus=4 --conservative=1 
 
 [4] Version History
 -------------------
@@ -74,7 +75,7 @@ directory and using 2 CPUs:
 CASC is routinely updated in an effort to assure that you are validating CRISPRs
 with the most up-to-date versions of UniRef and CRISPR DB:
 
-     Version 1.2 (17Mar2013) -- Linux compatibility improved
+     Version 1.2 (17Mar2013) -- Linux compatibility improved, conservative option added
      Version 1.1 (16Mar2013) -- [CRISPR DB 29Jan2013] [UniRef 16 Mar 2013]
      Version 1.0 (19Dec2012) -- Initial Version
 
