@@ -328,7 +328,7 @@ if (exists $BONAFIDE{$f}) {
 else {
 	print OUT3 ">$header\n$seq\n";
 }
-vclose(IN);
+close(IN);
 print OUT qq{
 +---------------------------------------------------------------------------------+
 |                               END OF REPORT                                     |
