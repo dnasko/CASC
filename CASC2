@@ -105,12 +105,15 @@ GetOptions (
 pod2usage(-verbose => 2)  if ($manual);
 pod2usage(-verbose => 1)  if ($help);
 pod2usage( -msg  => "\n\n ERROR!  Required argument --in not found.\n", -exitval => 2, -verbose => 1)  if (! $infile );
+unless (-e $infile) {die "\n\n ERROR: The input file $infile does not appear to exist\n\n";}
 if ($conservative) { $conservative = "yes";$calling = "Conservative";}
 else { $conservative = "no";}
 
 ## Global Variables
 my $MAX = 100;	## used for the progress bar
 my %SPACER_ID;
+my @THREADS = ();
+my @FILES = ();
 
 ## Check to see if BLAST installed and in the user's PATH
 my $BLASTN = `which blastn`; unless ($BLASTN =~ m/blastn/) {	die "\nERROR!\n External dependency 'blastn' (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/) not installed in system PATH\n";}
@@ -151,18 +154,32 @@ progress_bar( 14, $MAX, 50, '=' );
 
 ## Split up the FASTA file
 my $number_of_sequences = `fgrep -c ">" $infile`;
-my $seqs_per_file = $number_of_sequence / $ncpus; ## Need to round this up . . 
-print `perl $script_working_dir/bin/splitFASTA.pl $infile $outdir/component_processes/split_multifasta $infile_root $seqs_per_file`;
+if ($number_of_sequences < $ncpus) { die "\n\n ERROR: You cannot select more CPUs than you have input sequences\n ncpus = $ncpus\n seqs  = $number_of_sequences\n\n";}
+my $seqs_per_file = $number_of_sequences / $ncpus; ## Need to round this up . . . 
+unless ($seqs_per_file == int($seqs_per_file)) {
+    $seqs_per_file = int(++$seqs_per_file);
+}
+print `perl $script_working_dir/bin/splitFASTA.pl $infile $outdir/component_processes/split_multifasta $infile_root $seqs_per_file >$outdir/component_processes/split_multifasta/stdout`;
+for(1 .. $ncpus) {
+    my $file_name = "$outdir/component_processes/split_multifasta/$infile_root" . "-" . "$_.fsa";
+    push (@FILES, $file_name);
+}
+## ------------ ##
 
 ## Run mCRT to Call Putative CRISPR Spacers
-open(IN,"<$infile") || die "\n\n Cannot open the input file $infile\n\n !!! CASC EXITING UNSUCCESSFULLY !!!\n\n";
-close(IN);
-print `java -jar $script_working_dir/bin/mCRT1.5.jar $infile $outdir/component_processes/mCRT/$infile_root.raw >$outdir/component_processes/mCRT/$infile_root.stdout`;
-print `mv *.repeat.fsa $outdir/component_processes/mCRT`;
-print `mv *.spacer.fsa $outdir/component_processes/mCRT`;
+foreach my $file (@FILES) {
+    my $job = qq|java -jar $script_working_dir/bin/mCRT1.5.jar $file $outdir/component_processes/mCRT/$infile_root.raw >> $outdir/component_processes/mCRT/$infile_root.stdout|;
+    push (@THREADS, threads->create('task',"$job"));
+}
+foreach my $thread (@THREADS) {
+    $thread->join();
+}
+print `cat $infile_root-*.repeat.fsa > $outdir/component_processes/mCRT/$infile_root.repeat.fsa`;
+print `cat $infile_root-*.spacer.fsa > $outdir/component_processes/mCRT/$infile_root.spacer.fsa`;
+print `rm $infile_root-*.repeat.fsa`;
+print `rm $infile_root-*.spacer.fsa`;
 my $putative_spacers = `fgrep -c ">" $outdir/component_processes/mCRT/$infile_root.spacer.fsa`; chomp($putative_spacers);
 if ($putative_spacers == 0) {	progress_bar( $MAX, 100, 50, '=' ); die my $death = death(); print $death;}
-
 else {	progress_bar( 28, $MAX, 50, '=' );}
 
 ## Create Remaining Output Directories
@@ -205,27 +222,73 @@ while(<IN>) {
 close(IN);
 close(OUT);
 progress_bar( 42, $MAX, 50, '=' );
+## Split up the repeat FASTA file
+@FILES = ();
+@THREADS = ();
+print `rm $outdir/component_processes/split_multifasta/*`;
+$number_of_sequences = `fgrep -c ">" $outdir/component_processes/mCRT/$infile_root.repeat.fsa`;
+if ($number_of_sequences < $ncpus) { die "\n\n ERROR: You cannot select more CPUs than you have input sequences\n ncpus = $ncpus\n seqs  = $number_of_sequences\n\n";}
+$seqs_per_file = $number_of_sequences / $ncpus; ## Need to round this up . . . 
+unless ($seqs_per_file == int($seqs_per_file)) {
+    $seqs_per_file = int(++$seqs_per_file);
+}
+print `perl $script_working_dir/bin/splitFASTA.pl $outdir/component_processes/mCRT/$infile_root.repeat.fsa $outdir/component_processes/split_multifasta $infile_root-repeat $seqs_per_file >$outdir/component_processes/split_multifasta/stdout`;
+for(1 .. $ncpus) {
+    my $file_name = "$outdir/component_processes/split_multifasta/$infile_root-repeat" . "-" . "$_.fsa";
+    push (@FILES, $file_name);
+}
+## ------------ ##
 
 ## Perform a BLASTn of the repeats of putative spacers
-my $blastn_string = "blastn -query $outdir/component_processes/mCRT/$infile_root.repeat.fsa ";
-$blastn_string .= "-db $script_working_dir/BlastDBs/CrFinderRepeatDB_29Jan13 ";
-$blastn_string .= "-out $outdir/component_processes/blastn/$infile_root.btab ";
-$blastn_string .= "-evalue 1e-5 ";
-$blastn_string .= "-word_size 4 ";
-$blastn_string .= "-outfmt 6 ";
-$blastn_string .= "-num_threads $ncpus ";
-
-print `$blastn_string`;
+foreach my $file (@FILES) {
+    my $sub_root = $file;
+    $sub_root =~ s/.*\///;
+    my $blastn_string = "blastn -query $file ";
+    $blastn_string .= "-db $script_working_dir/BlastDBs/CrFinderRepeatDB_29Jan13 ";
+    $blastn_string .= "-out $outdir/component_processes/blastn/$sub_root.btab ";
+    $blastn_string .= "-evalue 1e-5 ";
+    $blastn_string .= "-word_size 4 ";
+    $blastn_string .= "-outfmt 6";
+    push (@THREADS, threads->create('task',"$blastn_string"));
+}
+foreach my $thread (@THREADS) {
+    $thread->join();
+}
+print `cat $outdir/component_processes/blastn/*.fsa.* > $outdir/component_processes/blastn/$infile_root.btab`;
 progress_bar( 56, $MAX, 50, '=' );
 
+## Split up the extracted FASTA file
+@FILES = ();
+@THREADS = ();
+print `rm $outdir/component_processes/split_multifasta/*`;
+$number_of_sequences = `fgrep -c ">" $outdir/component_processes/extract_sequence/$infile_root.fasta`;
+if ($number_of_sequences < $ncpus) { die "\n\n ERROR: You cannot select more CPUs than you have input sequences\n ncpus = $ncpus\n seqs  = $number_of_sequences\n\n";}
+$seqs_per_file = $number_of_sequences / $ncpus; ## Need to round this up . . . 
+unless ($seqs_per_file == int($seqs_per_file)) {
+    $seqs_per_file = int(++$seqs_per_file);
+}
+print `perl $script_working_dir/bin/splitFASTA.pl $outdir/component_processes/extract_sequence/$infile_root.fasta $outdir/component_processes/split_multifasta $infile_root-extract $seqs_per_file >$outdir/component_processes/split_multifasta/stdout`;
+for(1 .. $ncpus) {
+    my $file_name = "$outdir/component_processes/split_multifasta/$infile_root-extract" . "-" . "$_.fsa";
+    push (@FILES, $file_name);
+}
+## ------------ ##
+
 ## Perform a BLASTx of original sequences with putative spacers to find Cas proteins upstream
-my $blastx_string = "blastx -query $outdir/component_processes/extract_sequence/$infile_root.fasta ";
-$blastx_string .= "-db $script_working_dir/BlastDBs/UniRef_CAS_16Mar13 ";
-$blastx_string .= "-out $outdir/component_processes/blastx/$infile_root.btab ";
-$blastx_string .= "-evalue 1e-5 ";
-$blastx_string .= "-outfmt 6 ";
-$blastx_string .= "-num_threads $ncpus ";
-print `$blastx_string`;
+foreach my $file (@FILES) {
+    my $sub_root = $file;
+    $sub_root =~ s/.*\///;
+    my $blastx_string = "blastx -query $file ";
+    $blastx_string .= "-db $script_working_dir/BlastDBs/UniRef_CAS_16Mar13 ";
+    $blastx_string .= "-out $outdir/component_processes/blastx/$sub_root.btab ";
+    $blastx_string .= "-evalue 1e-5 ";
+    $blastx_string .= "-outfmt 6";
+    push (@THREADS, threads->create('task',"$blastx_string"))
+}
+foreach my $thread (@THREADS) {
+    $thread->join();
+}
+print `cat $outdir/component_processes/blastx/*.fsa.* > $outdir/component_processes/blastx/$infile_root.btab`;
 progress_bar( 70, $MAX, 50, '=' );
 
 ## Create list of bonafide spacer arrays from the repeat BLAST and Cas BLAST
@@ -309,6 +372,10 @@ sub progress_bar
     printf "|%-${width}s| (%.2f%%)\r", 
         $char x (($width-1)*$got/$total). '>', $got, $total, 100*$got/
 	    +$total;
+}
+sub task
+{
+    system( @_ );
 }
 sub death
 {
