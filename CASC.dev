@@ -1,0 +1,351 @@
+#!/usr/bin/perl
+
+# MANUAL FOR CASC
+
+=pod
+
+=head1 NAME
+
+CASC -- CASC Ain't Simply CRT
+
+=head1 SYNOPSIS
+
+ CASC --in /path/to/file.fasta --outdir /path/to/output/directory/ --ncpus 1 --conservative
+                     [--help] [--manual]
+
+=head1 DESCRIPTION
+
+Program to help call CRISPR spacers from FASTA files containing metagenomic
+or genomic reads or contigs.
+ 
+=head1 OPTIONS
+
+=over 3
+
+=item B<-i, --in>=FILENAME
+
+Input file in FASTA format. (Required)
+
+=item B<-o, --outdir>=DIRECTORY_NAME
+
+Output directory where all output files will be saved. Default will be the working directory. (Optional)
+
+=item B<-n, --ncpus>=INT
+
+Number of CPUs to use. Default = 1 (Optional)
+
+=item B<-c, --conservative>
+
+Be conservative with spacer calls. (Optional)
+By default CASC is liberal with calls.
+
+=item B<-h, --help>
+
+Displays the usage message.  (Optional) 
+
+=item B<-m, --manual>
+
+Displays full manual.  (Optional) 
+
+=back
+
+=head1 DEPENDENCIES
+
+Requires the following Perl libraries.
+
+
+
+=head1 AUTHOR
+
+Written by Daniel Nasko, 
+Center for Bioinformatics and Computational Biology, University of Delaware.
+
+=head1 REPORTING BUGS
+
+Report bugs to dnasko@udel.edu
+
+=head1 COPYRIGHT
+
+Copyright 2012 Daniel Nasko.  
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.  
+This is free software: you are free to change and redistribute it.  
+There is NO WARRANTY, to the extent permitted by law.  
+
+Please acknowledge author and affiliation in published work arising from this script's 
+usage <http://bioinformatics.udel.edu/Core/Acknowledge>.
+
+=cut
+
+use strict;
+use warnings;
+use Getopt::Long;
+use File::Basename;
+use Pod::Usage;
+use FindBin;
+use Cwd 'abs_path';
+use lib abs_path("$FindBin::Bin/bin/lib");
+use threads;
+my $version = "2.0";
+
+## ARGUMENTS WITH NO DEFAULT
+my($infile,$conservative,$help,$manual);
+## ARGUMENTS WITH DEFAULT
+my $outdir = "./casc_output/";
+my $ncpus = 1;
+my $calling = "Liberal";
+GetOptions (	
+				"i|in=s"	 =>	\$infile,
+				"o|outdir=s"	 =>	\$outdir,
+                                "c|conservative" =>     \$conservative,
+                                "n|ncpus=i"	 =>	\$ncpus,
+				"h|help"	 =>	\$help,
+				"m|manual"	 =>	\$manual);
+
+## VALIDATE ARGS
+pod2usage(-verbose => 2)  if ($manual);
+pod2usage(-verbose => 1)  if ($help);
+pod2usage( -msg  => "\n\n ERROR!  Required argument --in not found.\n", -exitval => 2, -verbose => 1)  if (! $infile );
+if ($conservative) { $conservative = "yes";$calling = "Conservative";}
+else { $conservative = "no";}
+
+## Global Variables
+my $MAX = 100;	## used for the progress bar
+my %SPACER_ID;
+
+## Check to see if BLAST installed and in the user's PATH
+my $BLASTN = `which blastn`; unless ($BLASTN =~ m/blastn/) {	die "\nERROR!\n External dependency 'blastn' (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/) not installed in system PATH\n";}
+my $BLASTX = `which blastx`; unless ($BLASTX =~ m/blastx/) {	die "\nERROR!\n External dependency 'blastx' (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/) not installed in system PATH\n";}
+
+## Format script's working directory
+my $script_working_dir = $FindBin::Bin;
+
+## What time is it?
+my $DATE = dateTime();
+
+## Format the infile's root
+my $infile_root = $infile;
+$infile_root =~ s/^.*\///;
+my @root_parts = split(/\./, $infile_root);
+pop @root_parts;
+$infile_root = join '.', @root_parts;
+
+
+## If user did not specify an output directory, set up the default
+if ($outdir =~ "./casc_output/") {
+    $outdir = "./casc_output/$infile_root-$DATE/";
+}
+
+## Create the output directories
+print `mkdir -p $outdir`;
+print `mkdir -p $outdir/component_processes/mCRT`;
+print `mkdir -p $outdir/component_processes/split_multifasta`;
+
+##################################################
+##                   MAIN                       ##
+##################################################
+## Initialze
+
+print "\n\n CASC Ain't Simply CRT\n Version: $version\n CRISPR Calling: $calling\n\n";
+progress_bar( 1, $MAX, 50, '=' );
+progress_bar( 14, $MAX, 50, '=' );
+
+## Split up the FASTA file
+my $number_of_sequences = `fgrep -c ">" $infile`;
+my $seqs_per_file = $number_of_sequence / $ncpus; ## Need to round this up . . 
+print `perl $script_working_dir/bin/splitFASTA.pl $infile $outdir/component_processes/split_multifasta $infile_root $seqs_per_file`;
+
+## Run mCRT to Call Putative CRISPR Spacers
+open(IN,"<$infile") || die "\n\n Cannot open the input file $infile\n\n !!! CASC EXITING UNSUCCESSFULLY !!!\n\n";
+close(IN);
+print `java -jar $script_working_dir/bin/mCRT1.5.jar $infile $outdir/component_processes/mCRT/$infile_root.raw >$outdir/component_processes/mCRT/$infile_root.stdout`;
+print `mv *.repeat.fsa $outdir/component_processes/mCRT`;
+print `mv *.spacer.fsa $outdir/component_processes/mCRT`;
+my $putative_spacers = `fgrep -c ">" $outdir/component_processes/mCRT/$infile_root.spacer.fsa`; chomp($putative_spacers);
+if ($putative_spacers == 0) {	progress_bar( $MAX, 100, 50, '=' ); die my $death = death(); print $death;}
+
+else {	progress_bar( 28, $MAX, 50, '=' );}
+
+## Create Remaining Output Directories
+print `mkdir -p $outdir/component_processes/blastn`;
+print `mkdir -p $outdir/component_processes/blastx`;
+print `mkdir -p $outdir/component_processes/bonafide_lookup`;
+print `mkdir -p $outdir/component_processes/extract_sequence`;
+
+## Extract the original sequences of putative spacers
+open(IN,"<$outdir/component_processes/mCRT/$infile_root.spacer.fsa") || die "\n Cannot open the spacer file $outdir/component_processes/mCRT/$infile_root.spacer.fsa\n\n";
+while(<IN>) {
+    chomp;
+    my $line = $_;
+    if ($line =~ m/>/) {
+	$line =~ s/-spacer-.*//;
+	$line =~ s/>//;
+	$SPACER_ID{$line} = 1;
+    }
+}
+close(IN);
+open(OUT,">$outdir/component_processes/extract_sequence/$infile_root.fasta") || die "\n\n Cannot open the output fiel for sequence extraction process: $outdir/component_processes/extract_sequence/$infile_root.fasta\n\n";
+open(IN,"<$infile") || die "\n\n Cannot open the original FASTA file $infile\n\n";
+my $print_flag = 0;
+while(<IN>) {
+    chomp;
+    my $line = $_;
+    if ($line =~ m/>/) {
+	$line =~ s/>//;
+	$line =~ s/ .*//;
+	if (exists $SPACER_ID{$line}) {
+	    print OUT ">$line\n";
+	    $print_flag =1 ;
+	}
+	else {	$print_flag = 0;}
+    }
+    elsif ($print_flag == 1) {
+	print OUT $line, "\n";
+    }
+}
+close(IN);
+close(OUT);
+progress_bar( 42, $MAX, 50, '=' );
+
+## Perform a BLASTn of the repeats of putative spacers
+my $blastn_string = "blastn -query $outdir/component_processes/mCRT/$infile_root.repeat.fsa ";
+$blastn_string .= "-db $script_working_dir/BlastDBs/CrFinderRepeatDB_29Jan13 ";
+$blastn_string .= "-out $outdir/component_processes/blastn/$infile_root.btab ";
+$blastn_string .= "-evalue 1e-5 ";
+$blastn_string .= "-word_size 4 ";
+$blastn_string .= "-outfmt 6 ";
+$blastn_string .= "-num_threads $ncpus ";
+
+print `$blastn_string`;
+progress_bar( 56, $MAX, 50, '=' );
+
+## Perform a BLASTx of original sequences with putative spacers to find Cas proteins upstream
+my $blastx_string = "blastx -query $outdir/component_processes/extract_sequence/$infile_root.fasta ";
+$blastx_string .= "-db $script_working_dir/BlastDBs/UniRef_CAS_16Mar13 ";
+$blastx_string .= "-out $outdir/component_processes/blastx/$infile_root.btab ";
+$blastx_string .= "-evalue 1e-5 ";
+$blastx_string .= "-outfmt 6 ";
+$blastx_string .= "-num_threads $ncpus ";
+print `$blastx_string`;
+progress_bar( 70, $MAX, 50, '=' );
+
+## Create list of bonafide spacer arrays from the repeat BLAST and Cas BLAST
+open(OUT,">$outdir/component_processes/bonafide_lookup/$infile_root.repeat.lookup");
+open(IN,"<$outdir/component_processes/blastn/$infile_root.btab") || die "\n Cannot open the result file for the spacer BLASTn: $outdir/component_processes/blastn/$infile_root.btab\n";
+my %REPEAT_ID;
+while(<IN>) {
+    chomp;
+    my @fields = (split/\t/, $_);
+    $fields[0] =~ s/-\d{1,3}$//;
+    $fields[0] =~ s/repeat/spacer/;
+    unless (exists $REPEAT_ID{$fields[0]}) {
+	print OUT $fields[0], "\n";
+    }
+    $REPEAT_ID{$fields[0]} = 1;
+}
+close(IN);
+close(OUT);
+
+open(OUT, ">$outdir/component_processes/bonafide_lookup/$infile_root.cas.lookup") || die "Cannot write to $outdir/component_processes/bonafide_lookup/$infile_root.cas.lookup\n";
+open(IN, "<$outdir/component_processes/blastx/$infile_root.btab") || die "\n Cannot open the result file for the Cas BLASTx: $outdir/component_processes/bonafide_lookup/$infile_root.cas.lookup\n";
+my %BLASTX_RESULTS;
+while(<IN>) {
+    chomp;
+    my @fields = split(/\t/, $_);
+    unless (exists $BLASTX_RESULTS{$fields[0]}) {
+	print OUT $fields[0], "\t", $fields[1], "\n";
+	$BLASTX_RESULTS{$fields[0]} = $fields[1];
+    }
+}
+close(IN);
+close(OUT);
+progress_bar( 84, $MAX, 50, '=' );
+
+## Run the report generator
+my $report_string = "perl $script_working_dir/bin/spacer_report_gen.pl ";
+$report_string .= "-f $infile ";
+$report_string .= "-r $outdir/component_processes/bonafide_lookup/$infile_root.repeat.lookup ";
+$report_string .= "-c $outdir/component_processes/bonafide_lookup/$infile_root.cas.lookup ";
+$report_string .= "-s $outdir/component_processes/mCRT/$infile_root.spacer.fsa ";
+$report_string .= "-v $version ";
+$report_string .= "-x $conservative ";
+$report_string .= "-o $outdir/$infile_root";
+print `$report_string`;
+progress_bar( $MAX, $MAX, 50, '=' );
+
+if (-z "$outdir/$infile_root.bonafide.spacer.fasta") {
+    my $no_bonafide = no_bonafide();
+    print $no_bonafide;
+}
+else {
+    my $suc_complete = complete();
+    print $suc_complete;
+}
+
+##################################################
+##                SUBROUTINES                   ##
+##################################################
+sub dateTime
+{
+    my $date = "";
+    my %month = (
+        0   =>  "Jan", 1   =>  "Feb", 2   =>  "Mar",
+        3   =>  "Apr", 4   =>  "May", 5   =>  "Jun",
+        6   =>  "Jul", 7   =>  "Aug", 8   =>  "Sep",
+        9   =>  "Oct", 10  =>  "Nov", 11  =>  "Dec"
+    );
+    my @timeDate = localtime(time);
+    $timeDate[5] =~ s/^1/20/; 
+    $date .= $timeDate[5] . "_" . $month{$timeDate[4]} . "_" . $timeDate[3] . "_";
+    $date .= $timeDate[2] . $timeDate[1];
+    return $date;
+}
+sub progress_bar
+{
+    my ( $got, $total, $width, $char ) = @_;
+    $width ||= 25;
+    $char  ||= '=';
+    my $num_width = length $total;
+    local $| = 1;
+    printf "|%-${width}s| (%.2f%%)\r", 
+        $char x (($width-1)*$got/$total). '>', $got, $total, 100*$got/
+	    +$total;
+}
+sub death
+{
+    my $death = q{
+
+ . . .-.   .-. .-. .-. .-. .-. .-. .-. 
+ |\| | |   |   |(   |  `-. |-' |(  `-. 
+ ' ` `-'   `-' ' ' `-' `-' '   ' ' `-' 
+                                                                                                                              
+};
+    $death .= " There were no putative spacers found in $infile\n Outputs have been written to $outdir";
+
+}
+sub no_bonafide
+{
+    my $no_bonafide = q{
+. . .-.   .-. .-. . . .-.   .-. .-. .-. .-.   .-. .-. .-. .-. .-. .-. .-. 
+|\| | |   |(  | | |\| |-|   |-   |  |  )|-    `-. |-' |-| |   |-  |(  `-. 
+' ` `-'   `-' `-' ' ` ` '   '   `-' `-' `-'   `-' '   ` ' `-' `-' ' ' `-'
+
+};
+$no_bonafide .= " There were no bona fide putative spacers found in $infile\n Outputs have been written to $outdir\n\n";
+}
+sub complete
+{
+    my $successful_complete = q{
+   ___ ___ ___ ___ ___ ___       ___                 _ 
+  / __| _ \_ _/ __| _ \ _ \ ___ | __|__ _  _ _ _  __| |
+ | (__|   /| |\__ \  _/   /(_-< | _/ _ \ || | ' \/ _` |
+  \___|_|_\___|___/_| |_|_\/__/ |_|\___/\_,_|_||_\__,_|
+ 
+
+ Final output files saved to:};
+
+    $successful_complete .= " $outdir\n\n";
+}
+
+
+
+
