@@ -10,7 +10,7 @@ spacer_report_gen.pl -- what it does
 
 =head1 SYNOPSIS
 
- spacer_report_gen.pl --fasta /path/to/spacers.fasta --repeat /path/to/repeat.list --cas /path/to/cas.list --out /path/to/output/root.name --setting yes
+ spacer_report_gen.pl --fasta /path/to/spacers.fasta --repeat /path/to/repeat.list --cas /path/to/cas.list --out /path/to/output/root.name --setting yes -y 100 -z 10000
                      [--help] [--manual]
 
 =head1 DESCRIPTION
@@ -47,6 +47,14 @@ Input file of ID's which have Cas upstream of CRISPR. (Required)
 =item B<-x, --setting>=FILENAME
 
 Be conservative (1) or liberal (0) with spacer calls.
+
+=item B<-y, --seqs>=INT
+
+Number of sequences in the file. (Required)
+
+=item B<-z, --bases>=INT
+
+Number of bases in the file. (Required)
 
 =item B<-o, --out>=FILENAME
 
@@ -102,7 +110,7 @@ use diagnostics;
 
 
 #ARGUMENTS WITH NO DEFAULT
-my($fasta,$repeat,$cas,$spacer,$outfile,$setting,$version,$help,$manual);
+my($fasta,$repeat,$cas,$spacer,$outfile,$setting,$total_seq,$total_base,$version,$help,$manual);
 
 GetOptions (	
 				"f|fasta=s"	=>	\$fasta,
@@ -111,6 +119,8 @@ GetOptions (
                                 "r|repeat=s"    =>      \$repeat,
                                 "c|cas=s"       =>      \$cas,
                                 "x|setting=s"   =>      \$setting,
+				"y|seqs=i"	=>	\$total_seq,
+				"z|bases=i"	=>	\$total_base,
 				"v|version=s"	=>	\$version,
 				"h|help"	=>	\$help,
 				"m|manual"	=>	\$manual);
@@ -124,18 +134,15 @@ pod2usage( -msg  => "ERROR!  Required argument -r not found.\n", -exitval => 2, 
 pod2usage( -msg  => "ERROR!  Required argument -c not found.\n", -exitval => 2, -verbose => 1)  if (! $cas );
 pod2usage( -msg  => "ERROR!  Required argument -o not found.\n", -exitval => 2, -verbose => 1)  if (! $outfile );
 pod2usage( -msg  => "ERROR!  Required argument -x not found.\n", -exitval => 2, -verbose => 1)  if (! $setting );
-
+pod2usage( -msg  => "ERROR!  Required argument -y not found.\n", -exitval => 2, -verbose => 1)  if (! $total_seq );
+pod2usage( -msg  => "ERROR!  Required argument -z not found.\n", -exitval => 2, -verbose => 1)  if (! $total_base );
 
 
 ## GLOBAL VARIABLE SETUP
 my $total_spacer = 0; my $total_crispr = 0; my $total_cas = 0; my $total_repeat = 0; my $total_statistics = 0;
 my (@STATISTICS,%BONAFIDE,%AVG,%STD,@CAS,@REPEAT);
 my $library_name = $fasta;$library_name =~s/.*\///;$library_name =~s/\..*//;
-my $total_seq = `fgrep -c ">" $fasta`;chomp($total_seq);
-my $total_base = `fgrep -v ">" $fasta | wc -m`;
-$total_base -= `fgrep -v ">" $fasta | wc -l`;
 my $base_per_seq = &Round($total_base/$total_seq, 3);
-$total_base = $total_base - $total_seq;
 my $rpt_outfile = $outfile . ".report.txt";
 my $bon_outfile	= $outfile . ".bonafide.spacer.fasta";
 my $nb_outfile	= $outfile . ".nonbonafide.spacer.fasta";
