@@ -77,6 +77,7 @@ to a new folder on our home directory, using 4 CPUs, and calling CRISPRs conserv
 CASC is routinely updated in an effort to assure that you are validating CRISPRs
 with the most up-to-date versions of UniRef and CRISPR DB:
 
+     Version 2.0 (22Mar2013) == Improved multithreading function
      Version 1.2 (17Mar2013) -- Linux compatibility improved, conservative option added
      Version 1.1 (16Mar2013) -- [CRISPR DB 29Jan2013] [UniRef 16 Mar 2013]
      Version 1.0 (19Dec2012) -- Initial Version
