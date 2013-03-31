@@ -111,7 +111,7 @@ else { $conservative = "no";}
 ## Global Variables
 my $MAX = 100;					## used for the progress bar
 my $PRGS = 0;
-my $UniRefDB = "UniRef_CAS_16Mar13";		## UniRef DB Version
+my $UniRefDB = "UniRef_CAS_31Mar13";		## UniRef DB Version
 my $RepeatDB = "CrFinderRepeatDB_29Jan13";	## CRISPR DB Version
 my %SPACER_ID;
 my (@THREADS,@FILES);
