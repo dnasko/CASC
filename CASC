@@ -299,7 +299,7 @@ foreach my $file (@FILES) {
     my $blastx_string = "blastx -query $file ";
     $blastx_string .= "-db $script_working_dir/BlastDBs/$UniRefDB ";
     $blastx_string .= "-out $outdir/component_processes/blastx/$sub_root.btab ";
-    $blastx_string .= "-evalue 1e-5 ";
+    $blastx_string .= "-evalue 1e-12 ";
     $blastx_string .= "-outfmt 6";
     push (@THREADS, threads->create('task',"$blastx_string"))
 }
