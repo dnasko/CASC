@@ -84,7 +84,7 @@ use FindBin;
 use Cwd 'abs_path';
 use lib abs_path("$FindBin::Bin/bin/lib");
 use threads;
-my $version = "2.0";
+my $version = "2.1";
 
 ## ARGUMENTS WITH NO DEFAULT
 my($infile,$conservative,$help,$manual);
@@ -169,7 +169,10 @@ $PRGS+=10;
 progress_bar( $PRGS, $MAX, 50, '=' );
 
 ## Split up the FASTA file
-if ($NUMBER_OF_SEQS < $ncpus) { die "\n\n ERROR: You cannot select more CPUs than you have input sequences\n ncpus = $ncpus\n seqs  = $NUMBER_OF_SEQS\n\n";}
+if ($NUMBER_OF_SEQS < $ncpus) {
+    print "\n\n Warning: You cannot select more CPUs than you have input sequences\n ncpus = $ncpus\n seqs  = $NUMBER_OF_SEQS\n ncpus adjusted to $NUMBER_OF_SEQS\n\n";
+    $ncpus = $NUMBER_OF_SEQS;
+}
 my $seqs_per_file = $NUMBER_OF_SEQS / $ncpus; ## Need to round this up . . . 
 unless ($seqs_per_file == int($seqs_per_file)) {
     $seqs_per_file = int(++$seqs_per_file);
@@ -216,7 +219,7 @@ while(<IN>) {
     }
 }
 close(IN);
-open(OUT,">$outdir/component_processes/extract_sequence/$infile_root.fasta") || die "\n\n Cannot open the output fiel for sequence extraction process: $outdir/component_processes/extract_sequence/$infile_root.fasta\n\n";
+open(OUT,">$outdir/component_processes/extract_sequence/$infile_root.fasta") || die "\n\n Cannot open the output file for sequence extraction process: $outdir/component_processes/extract_sequence/$infile_root.fasta\n\n";
 open(IN,"<$infile") || die "\n\n Cannot open the original FASTA file $infile\n\n";
 my $print_flag = 0;
 while(<IN>) {
@@ -243,8 +246,11 @@ progress_bar( $PRGS, $MAX, 50, '=' );
 @FILES = ();
 @THREADS = ();
 print `rm $outdir/component_processes/split_multifasta/*`;
-my $number_of_sequences = `fgrep -c ">" $outdir/component_processes/mCRT/$infile_root.repeat.fsa`;
-if ($number_of_sequences < $ncpus) { die "\n\n ERROR: You cannot select more CPUs than you have input sequences\n ncpus = $ncpus\n seqs  = $number_of_sequences\n\n";}
+my $number_of_sequences = `grep -c ">" $outdir/component_processes/mCRT/$infile_root.repeat.fsa`;
+if ($number_of_sequences < $ncpus) {
+    print "\n\n Warning: Too few repeats for ncpus\n ncpus = $ncpus\n seqs  = $number_of_sequences\n ncpus adjusted to $number_of_sequences\n\n";
+    $ncpus = $number_of_sequences;
+}
 $seqs_per_file = $number_of_sequences / $ncpus; ## Need to round this up . . . 
 unless ($seqs_per_file == int($seqs_per_file)) {
     $seqs_per_file = int(++$seqs_per_file);
@@ -279,8 +285,11 @@ print `cat $outdir/component_processes/blastn/*.fsa.* > $outdir/component_proces
 @FILES = ();
 @THREADS = ();
 print `rm $outdir/component_processes/split_multifasta/*`;
-$number_of_sequences = `fgrep -c ">" $outdir/component_processes/extract_sequence/$infile_root.fasta`;
-if ($number_of_sequences < $ncpus) { die "\n\n ERROR: You cannot select more CPUs than you have input sequences\n ncpus = $ncpus\n seqs  = $number_of_sequences\n\n";}
+$number_of_sequences = `grep -c ">" $outdir/component_processes/extract_sequence/$infile_root.fasta`;
+if ($number_of_sequences < $ncpus) {
+    print "\n\n Warning: Too few Cas sequences for ncpus\n ncpus = $ncpus\n seqs  = $number_of_sequences\n ncpus adjusted to $number_of_sequences\n\n";
+    $ncpus = $number_of_sequences;
+}
 $seqs_per_file = $number_of_sequences / $ncpus; ## Need to round this up . . . 
 unless ($seqs_per_file == int($seqs_per_file)) {
     $seqs_per_file = int(++$seqs_per_file);

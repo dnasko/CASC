@@ -99,7 +99,6 @@ usage <http://bioinformatics.udel.edu/Core/Acknowledge>.
 
 =cut
 
-
 use strict;
 use Getopt::Long;
 use File::Basename;
@@ -139,7 +138,7 @@ pod2usage( -msg  => "ERROR!  Required argument -z not found.\n", -exitval => 2, 
 
 
 ## GLOBAL VARIABLE SETUP
-my $total_spacer = 0; my $total_crispr = 0; my $total_cas = 0; my $total_repeat = 0; my $total_statistics = 0;
+my $total_spacer = 0; my $total_crispr = 0; my $total_arrays = 0 ;my $total_cas = 0; my $total_repeat = 0; my $total_statistics = 0;
 my (@STATISTICS,%BONAFIDE,%AVG,%STD,@CAS,@REPEAT);
 my $library_name = $fasta;$library_name =~s/.*\///;$library_name =~s/\..*//;
 my $base_per_seq = &Round($total_base/$total_seq, 3);
@@ -182,18 +181,8 @@ if (-e $repeat) {
 }
 ## Find the Spacers that have the right sequence statistics
 
-#my ($seqio_obj,$seq_obj,%seq_statistics);
-#$seqio_obj = Bio::SeqIO->new(-file => "$spacer", -format => "fasta" ) or die $!;
-#while ($seq_obj = $seqio_obj->next_seq){
-#    $total_spacer++;
-#    my $sequence = $seq_obj->seq;
-#    my $seq_length = length($sequence);
-#    my $header = $seq_obj->display_id;
-#    my $root = $header;
-#    $root =~ s/-\d{1,3}$//;
-#    push @{$seq_statistics{$root}},  $seq_length;
-#}
 my %seq_statistics;
+my %unique_spacer_containing_sequences;
 my $header = "";
 my $seq = "";
 my $lc = 0;
@@ -209,6 +198,11 @@ while(<IN>) {
 			$root =~ s/>//;
 			$root =~ s/-\d{1,3}$//;
 			push @{$seq_statistics{$root}},  $seq_length;
+			my $bare_root = $root =~ s/-spacer-.*//;
+			unless (exists $unique_spacer_containing_sequences{$bare_root}) {
+				$unique_spacer_containing_sequences{$bare_root} = 1;
+				$total_crispr++;
+			}
 		}
 		$header = $line;
 		$seq = "";
@@ -224,7 +218,7 @@ push @{$seq_statistics{$root}},  $seq_length;
 close(IN);
 my ($k, $v);
 while (($k, $v) = each(%seq_statistics)){
-    $total_crispr++;
+    $total_arrays++;
     my $average = sum(@{$v})/@{$v};
     my $sqtotal = 0;
     my $size = 0;
@@ -244,6 +238,14 @@ while (($k, $v) = each(%seq_statistics)){
         $format =~ s/-.*//;
         unless (exists $BONAFIDE{$format}) {    $BONAFIDE{$format} = 1;}
     }
+    ## New bit of code added for verion 2.1
+    if ($std > 5) {
+	my $format = $k;
+        $format =~ s/-.*//;
+	if (exists $BONAFIDE{$format}) {
+		delete $BONAFIDE{$format};
+	}
+    }
 }
 
 ## Begin printing report...
@@ -258,16 +260,27 @@ Bases per Sequence......................$base_per_seq
 
 CRISPR IDENTIFICATION
 Sequences Containing Putative CRISPRs...$total_crispr
+Number of Putative Arrays...............$total_arrays
 Number of Putative Spacers..............$total_spacer
 
 
 CRISPR VALIDATION
-Sequences with Cas protein upstream.....$total_cas out of $total_crispr
+Arrays with Cas protein upstream.....$total_cas out of $total_arrays
 ";
 if (@CAS) {
+    my ($org_max, $spcr_max,$uni_max) = 0;
     foreach my $i (@CAS) {
         my @field = split(/\t/, $i);
-        print OUT "\t>$field[0]\t = ", scalar @{$seq_statistics{"$field[0]-spacer-1"}}, " spacers\t\t$field[1]";
+        if (length($field[0]) > $org_max) { $org_max = length($field[0]);}
+	my $spacer_string = scalar @{$seq_statistics{"$field[0]-spacer-1"}} . " spacers";
+	if (length($spacer_string) > $spcr_max) {$spcr_max = length($spacer_string);}
+	if (length($field[1]) > $uni_max) {$uni_max = length($field[1])}
+    }
+    my $format_string = "%" . $org_max . "s%" . $spcr_max . "s%" . $uni_max . "s";
+    foreach my $i (@CAS) {
+        my @field = split(/\t/, $i);
+	my $spacer_string = scalar @{$seq_statistics{"$field[0]-spacer-1"}} . " spacers";
+        printf OUT ("$format_string\n", $field[0], $spacer_string, $field[1]);
     }
 }
 else {  print OUT "\tNone...\n";}
