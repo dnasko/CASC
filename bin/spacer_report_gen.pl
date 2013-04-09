@@ -198,7 +198,8 @@ while(<IN>) {
 			$root =~ s/>//;
 			$root =~ s/-\d{1,3}$//;
 			push @{$seq_statistics{$root}},  $seq_length;
-			my $bare_root = $root =~ s/-spacer-.*//;
+			my $bare_root = $root;
+			$bare_root =~ s/-spacer-.*//;
 			unless (exists $unique_spacer_containing_sequences{$bare_root}) {
 				$unique_spacer_containing_sequences{$bare_root} = 1;
 				$total_crispr++;
@@ -265,10 +266,11 @@ Number of Putative Spacers..............$total_spacer
 
 
 CRISPR VALIDATION
-Arrays with Cas protein upstream.....$total_cas out of $total_arrays
-";
+Arrays with Cas protein upstream.....$total_cas out of $total_arrays\n";
 if (@CAS) {
-    my ($org_max, $spcr_max,$uni_max) = 0;
+    my $org_max = 0;
+    my $spcr_max = 0;
+    my $uni_max = 0;
     foreach my $i (@CAS) {
         my @field = split(/\t/, $i);
         if (length($field[0]) > $org_max) { $org_max = length($field[0]);}
@@ -276,49 +278,92 @@ if (@CAS) {
 	if (length($spacer_string) > $spcr_max) {$spcr_max = length($spacer_string);}
 	if (length($field[1]) > $uni_max) {$uni_max = length($field[1])}
     }
+    $spcr_max += 5;
+    $uni_max += 5;
     my $format_string = "%" . $org_max . "s%" . $spcr_max . "s%" . $uni_max . "s";
     foreach my $i (@CAS) {
         my @field = split(/\t/, $i);
 	my $spacer_string = scalar @{$seq_statistics{"$field[0]-spacer-1"}} . " spacers";
-        printf OUT ("$format_string\n", $field[0], $spacer_string, $field[1]);
+        printf OUT ("$format_string", $field[0], $spacer_string, $field[1]);
     }
+    print OUT "\n";
 }
-else {  print OUT "\tNone...\n";}
-print OUT "Repeats matching known repeats..........$total_repeat out of $total_crispr
-";
+else {  print OUT "None...\n";}
+print OUT "Repeats matching known repeats..........$total_repeat out of $total_arrays\n";
 if (@REPEAT) {
+    my $org_max = 0;
+    my $spcr_max = 0;
     foreach my $i (@REPEAT) {
         chomp($i);
         my $format = $i;
         $format =~ s/-.*//;
-        print OUT "\t>$format\t = ", scalar @{$seq_statistics{$i}}, " spacers\n";
+	my $spacer_string = scalar @{$seq_statistics{$i}} . " spacers";
+	if (length($format) > $org_max) {$org_max = length($format);}
+	if (length($spacer_string) > $spcr_max) {$spcr_max = length($spacer_string);}
     }
+    $spcr_max += 5;
+    my $format_string = "%" . $org_max . "s%" . $spcr_max . "s";
+    foreach my $i (@REPEAT) {
+        chomp($i);
+        my $format = $i;
+        $format =~ s/-.*//;
+	my $spacer_string = scalar @{$seq_statistics{$i}} . " spacers";
+        printf OUT ("$format_string\n", $format, $spacer_string)
+    }
+    print OUT "\n";
 }
-else {  print OUT "\tNone...\n";}
+else {  print OUT "None...\n";}
 print OUT "Spacers with Proper Statistics..........", scalar @STATISTICS, " out of $total_crispr\n";
 if (@STATISTICS) {
+    my $org_max = 0;
+    my $spcr_max = 0;
     foreach my $i (@STATISTICS) {
         my $format = $i;
         $format =~ s/-.*//;
-        print OUT "\t>$format\t = ", scalar @{$seq_statistics{$i}}, " spacers\n";
-        
+        my $spacer_string = scalar @{$seq_statistics{$i}} . " spacers";
+	if (length($format) > $org_max) {$org_max = length($format);}
+	if (length($spacer_string) > $spcr_max) {$spcr_max = length($spacer_string);}
     }
+    $spcr_max += 5;
+    my $format_string = "%" . $org_max . "s%" . $spcr_max . "s";
+    foreach my $i (@STATISTICS) {
+        my $format = $i;
+        $format =~ s/-.*//;
+        my $spacer_string = scalar @{$seq_statistics{$i}} . " spacers";
+        printf OUT ("$format_string\n", $format, $spacer_string)
+    }
+    print OUT "\n";
 }
-else {  print OUT "\tNone...\n";}
+else {  print OUT "None...\n";}
 
 print OUT "
-Bonafide CRISPRs = ", scalar keys(%BONAFIDE), " out of $total_crispr = ";
-my $percent = &Round(scalar keys(%BONAFIDE)/$total_crispr, 4);
-$percent = $percent * 100;
+Bonafide CRISPRs = ", scalar keys(%BONAFIDE), " out of $total_arrays = ";
+my $percent = &Round(scalar keys(%BONAFIDE)/$total_arrays, 4);
+$percent *= 100;
 print OUT "$percent%\n\n";
 
 ## Begin printing of the exhaustive report
-print OUT "\nEXHAUSTIVE REPORT ON PUTATIVE CRISPRs\n\nSequence\t\t\t\tCRISPR\t\tAverage\t\tStdDev\n";
+my $ex_org_max = 8;
+my $ex_avg_max = 7;
+my $ex_stdev_max = 6;
 while (($k, $v) = each(%seq_statistics)){
     my $f = $k;$f =~ s/-.*//;
-    print OUT "$f\t\t\t";
-    if (exists $BONAFIDE{$f}) { print OUT "YES\t\t$AVG{$f}\t\t$STD{$f}\n";}
-    else {  print OUT "no\t\t$AVG{$f}\t\t$STD{$f}\n";}
+    if (length($f) > $ex_org_max) { $ex_org_max = length($f);}
+    if (length($AVG{$f}) > $ex_avg_max) {	$ex_avg_max = length($AVG{$f})}
+    if (length($STD{$f}) > $ex_stdev_max) {	$ex_stdev_max = length($STD{$f})}
+}
+$ex_avg_max += 5;
+$ex_stdev_max += 5;
+my $first_format_string = "%" . $ex_org_max . "s%11" . "s%" . $ex_avg_max . "s%" . $ex_stdev_max . "s";
+print OUT "\nEXHAUSTIVE REPORT ON PUTATIVE CRISPRs\n\n";
+printf OUT ("$first_format_string\n", "Sequence", "CRISPR", "Average", "StdDev");
+printf OUT ("$first_format_string\n", "========", "======", "=======", "======");
+while (($k, $v) = each(%seq_statistics)){
+    my $f = $k;$f =~ s/-.*//;
+    if (exists $BONAFIDE{$f}) {
+	printf OUT ("$first_format_string\n", $f, "YES", $AVG{$f}, $STD{$f});
+    }
+    else {  printf OUT ("$first_format_string\n", $f, "no", $AVG{$f}, $STD{$f});}
 }
 
 $header = "";
