@@ -84,7 +84,7 @@ use FindBin;
 use Cwd 'abs_path';
 use lib abs_path("$FindBin::Bin/bin/lib");
 use threads;
-my $version = "2.1";
+my $version = "2.2";
 
 ## ARGUMENTS WITH NO DEFAULT
 my($infile,$conservative,$help,$manual);
@@ -186,7 +186,7 @@ for(1 .. $ncpus) {
 
 ## Run mCRT to Call Putative CRISPR Spacers
 foreach my $file (@FILES) {
-    my $job = qq|java -jar $script_working_dir/bin/mCRT1.5.jar $file $outdir/component_processes/mCRT/$infile_root.raw >> $outdir/component_processes/mCRT/$infile_root.stdout|;
+    my $job = qq|java -jar -Xms128M -Xmx2G $script_working_dir/bin/mCRT1.5.jar $file $outdir/component_processes/mCRT/$infile_root.raw >> $outdir/component_processes/mCRT/$infile_root.stdout|;
     push (@THREADS, threads->create('task',"$job"));
 }
 foreach my $thread (@THREADS) {
