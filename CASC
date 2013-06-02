@@ -186,13 +186,21 @@ for(1 .. $ncpus) {
 
 ## Run mCRT to Call Putative CRISPR Spacers
 foreach my $file (@FILES) {
-    my $job = qq|java -jar -Xms128M -Xmx2G $script_working_dir/bin/mCRT1.5.jar $file $outdir/component_processes/mCRT/$infile_root.raw >> $outdir/component_processes/mCRT/$infile_root.stdout|;
+    my $mod_file = $file;
+    $mod_file =~ s/.*\///;
+    my $job = qq|java -jar -Xms128M -Xmx2G $script_working_dir/bin/mCRT1.5.jar $file $outdir/component_processes/mCRT/$mod_file.raw >> $outdir/component_processes/mCRT/$infile_root.stdout|;
     push (@THREADS, threads->create('task',"$job"));
 }
 foreach my $thread (@THREADS) {
     $thread->join();
     $PRGS+=(25/$ncpus);
     progress_bar( $PRGS, $MAX, 50, '=' );
+}
+print `cat $outdir/component_processes/mCRT/*.raw > $outdir/component_processes/mCRT/$infile_root.raw`;
+foreach my $file (@FILES) {
+    my $mod_file = $file;
+    $mod_file =~ s/.*\///;
+    print `rm $outdir/component_processes/mCRT/$mod_file.raw`;
 }
 print `cat $infile_root-*.repeat.fsa > $outdir/component_processes/mCRT/$infile_root.repeat.fsa`;
 print `cat $infile_root-*.spacer.fsa > $outdir/component_processes/mCRT/$infile_root.spacer.fsa`;
@@ -373,7 +381,6 @@ else {
     my $suc_complete = complete();
     print $suc_complete;
 }
-
 ##################################################
 ##                SUBROUTINES                   ##
 ##################################################

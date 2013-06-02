@@ -138,7 +138,12 @@ pod2usage( -msg  => "ERROR!  Required argument -z not found.\n", -exitval => 2, 
 
 
 ## GLOBAL VARIABLE SETUP
-my $total_spacer = 0; my $total_crispr = 0; my $total_arrays = 0 ;my $total_cas = 0; my $total_repeat = 0; my $total_statistics = 0;
+my $total_spacer = 0;	## Total number of spacers
+my $total_crispr = 0;	## Total number of sequences containing crisprs
+my $total_arrays = 0;	## Total number of arrays
+my $total_cas = 0;	## Total number of arrays with Cas proteins
+my $total_repeat = 0;	## Total number of arrays with known repeats
+my $total_statistics = 0;	## Total number of arrays with appropriate spacer statistics
 my (@STATISTICS,%BONAFIDE,%AVG,%STD,@CAS,@REPEAT);
 my $library_name = $fasta;$library_name =~s/.*\///;$library_name =~s/\..*//;
 my $base_per_seq = &Round($total_base/$total_seq, 3);
@@ -150,7 +155,30 @@ open(OUT,">$rpt_outfile") || die "cannot open the outfile";
 open(OUT2,">$bon_outfile") || die "cannot open the bon outfile";
 open(OUT3,">$nb_outfile") || die "cannot open the nb outfile";
 
-## Run through Cas lookup
+## Get Coordinates for each crispr array
+my %COORD;
+my $raw_spacer_report = $spacer;
+$raw_spacer_report =~ s/\.spacer\.fsa$/\.raw/;
+my ($strt,$stop,$headerer);
+open(IN,"<$raw_spacer_report");
+while(<IN>) {
+    chomp;
+    if ($_ =~ m/SEQUENCE:/) {
+        $headerer = $_;
+        $headerer =~ s/.*SEQUENCE: *//;
+    }
+    if ($_ =~ m/Range: /) {
+	$strt = $_;
+	$strt =~ s/.*Range: //;
+	$stop = $strt;
+	$strt =~ s/ -.*//;
+	$stop =~ s/.* //;
+	$COORD{$headerer} = $strt . "," . $stop;
+    }
+}
+close(IN);
+
+############### Run through the Cas lookup file
 if (-e $cas){
 	open(IN,"<$cas");# || die "Cannot open the Cas list file $cas\n\n";
 	while(<IN>) {
@@ -164,7 +192,7 @@ if (-e $cas){
 	@CAS = <IN>;
 	close(IN);
 }
-## Run through Repeat lookup
+############### Run through Repeat lookup file
 if (-e $repeat) {
 	open(IN,"<$repeat");# || die "Cannot open the repeat lookup file $repeat\n\n";
 	@REPEAT = <IN>;
@@ -179,7 +207,7 @@ if (-e $repeat) {
 	}
 	close(IN);
 }
-## Find the Spacers that have the right sequence statistics
+############### Find the Spacers that have the right sequence statistics
 
 my %seq_statistics;
 my %unique_spacer_containing_sequences;
@@ -249,122 +277,399 @@ while (($k, $v) = each(%seq_statistics)){
     }
 }
 
+############### Formatting spaces needed for formatted report
+my $spacing = 15;
+if (length($library_name) <= 47) {
+    my $dif = 47 - length($library_name);
+    for (my $i = 1; $i <= $dif; $i++) {
+        $library_name = $library_name . " ";
+    }
+}
+if (length($total_seq) <= $spacing) {
+    my $dif = $spacing - length($total_seq);
+    for (my $i = 1; $i <= $dif; $i++) {
+	$total_seq = $total_seq . " ";
+    }
+}
+if (length($total_base) <= $spacing) {
+    my $dif = $spacing - length($total_base);
+    for(my $i = 1; $i <= $dif; $i++) {
+	$total_base = $total_base . " ";
+    }
+}
+if (length($base_per_seq) <= $spacing) {
+    my $dif = $spacing - length($base_per_seq);
+    for(my $i = 1; $i <= $dif; $i++) {
+	$base_per_seq = $base_per_seq . " ";
+    }
+}
+if (length($total_crispr) <= $spacing) {
+    my $dif = $spacing - length($total_crispr);
+    for(my $i = 1; $i <= $dif; $i++) {
+        $total_crispr = $total_crispr . " ";
+    }
+}
+my $BON = 0;
+foreach my $i (keys %BONAFIDE) { $BON++;}
+my $PER = Round($BON/$total_arrays, 4);
+$PER *= 100;
+$PER .= "%";
+if (length($BON) <= $spacing) {
+    my $dif = $spacing - length($BON);
+    for(my $i = 1; $i <= $dif; $i++) {
+        $BON = $BON . " ";
+    }
+}
+if (length($PER) <= $spacing) {
+    my $dif = $spacing - length($PER);
+    for(my $i = 1; $i <= $dif; $i++) {
+        $PER = $PER . " ";
+    }
+}
+if (length($total_arrays) <= $spacing) {
+    my $dif = $spacing - length($total_arrays);
+    for(my $i = 1; $i <= $dif; $i++) {
+        $total_arrays = $total_arrays . " ";
+    }
+}
 ## Begin printing report...
 
-print OUT "CASC $version
+print OUT "CASC Version $version
 
-LIBRARY: $library_name
-Number of Sequences.....................$total_seq
-Number of Bases.........................$total_base
-Bases per Sequence......................$base_per_seq
++----------------------------------------------------------+
+| G E N E R A L      I N F O R M A T I O N                 |
++----------------------------------------------------------+
+| Library: $library_name |
+| Number of Sequences..................... $total_seq |
+| Number of Bases......................... $total_base |
+| Bases per Sequence...................... $base_per_seq |
++----------------------------------------------------------+
 
++----------------------------------------------------------+
+| C R I S P R      I D E N T I F I C A T I O N             |
++----------------------------------------------------------+
+| Number of Putative CRISPR Arrays........ $total_arrays |
+| Number of Bona Fide CRISPR Arrays....... $BON |
+| Percent Bona Fide....................... $PER |
++----------------------------------------------------------+\n\n";
 
-CRISPR IDENTIFICATION
-Sequences Containing Putative CRISPRs...$total_crispr
-Number of Putative Arrays...............$total_arrays
-Number of Putative Spacers..............$total_spacer
+## Little more formatting . . .
+$total_arrays =~ s/ .*//;
+my $form_total = length($total_cas) + length($total_arrays) + 8;
+if ($form_total <= 18) {
+    my $dif = 18 -$form_total;
+    for(my $i = 1; $i <= $dif; $i++) {
+	$total_arrays = $total_arrays . " ";
+    }
+}
+print OUT "+----------------------------------------------------------+
+| C R I S P R      V A L I D A T I O N                     |
++----------------------------------------------------------+
+| Arrays with Cas protein upstream..... $total_cas out of $total_arrays |\n";
 
-
-CRISPR VALIDATION
-Arrays with Cas protein upstream.....$total_cas out of $total_arrays\n";
+########## Printing the formatted output for Cas validated crisprs
 if (@CAS) {
-    my $org_max = 0;
-    my $spcr_max = 0;
-    my $uni_max = 0;
+    my $org_max = 8;
+    my $spcr_max = 16;
+    my $uni_max = 24;
+    my $start_max = 14;
+    my $stop_max = 14;
     foreach my $i (@CAS) {
-        my @field = split(/\t/, $i);
-        if (length($field[0]) > $org_max) { $org_max = length($field[0]);}
+	my @field = split(/\t/, $i);
+	my $coord = '';
+	if (exists $COORD{$field[0]}) {$coord = $COORD{$field[0]};}
+	my @CRD = split(/,/, $coord);
+	my $start_coord = $CRD[0];
+	my $stop_coord = $CRD[1];
+	if (length($start_coord) > $start_max) { $start_max = length($start_coord);}
+	if (length($stop_coord) > $stop_max) { $stop_max = length($stop_coord);}
+	if (length($field[0]) > $org_max) { $org_max = length($field[0]);}
 	my $spacer_string = scalar @{$seq_statistics{"$field[0]-spacer-1"}} . " spacers";
 	if (length($spacer_string) > $spcr_max) {$spcr_max = length($spacer_string);}
 	if (length($field[1]) > $uni_max) {$uni_max = length($field[1])}
     }
-    $spcr_max += 5;
-    $uni_max += 5;
-    my $format_string = "%" . $org_max . "s%" . $spcr_max . "s%" . $uni_max . "s";
+    $spcr_max += 3;
+    $uni_max += 3;
+    $start_max += 3;
+    $stop_max += 3;
+    my $format_string = "%" . $org_max . "s%" . $spcr_max . "s%" . $uni_max . "s%" . $start_max . "s%" . $stop_max . "s";
+    my $stop_max2 = $stop_max - 1;
+    my $format_string2 = "%" . $org_max . "s%" . $spcr_max . "s%" . $uni_max . "s%" . $start_max . "s%" . $stop_max2 . "s";
+    my $dash_size = $org_max - 8;
+    my $dashes = "+---------";
+    my $seqseqname = "| SeqName";
+    if ($dash_size != 0) {
+	for (my $i=1;$i<=$dash_size;$i++) {
+	    $dashes = $dashes . "-";
+	    $seqseqname = $seqseqname . " ";
+	}
+    }
+    $dashes = $dashes . "+";
+    $seqseqname = $seqseqname . " |";
+    printf OUT ("$format_string2", "$dashes", "------------------+", "--------------------------+", "----------------+", "--------------+\n");
+    printf OUT ("$format_string2", "$seqseqname", "Spacers in Seq |", "Cas Protein UniRef Hit |", "Array Start |", "Array Stop |\n");
+    printf OUT ("$format_string2", "$dashes", "------------------+", "--------------------------+", "----------------+", "--------------+\n");
     foreach my $i (@CAS) {
+	chomp($i);
         my @field = split(/\t/, $i);
+	my $start_coord = ' ';
+	my $stop_coord = ' ';
+	if (exists $COORD{$field[0]}) {
+	    my $coord = $COORD{$field[0]};
+	    my @CRD= split(/,/, $coord);
+	    $start_coord= $CRD[0];
+	    $stop_coord = $CRD[1];
+	}
 	my $spacer_string = scalar @{$seq_statistics{"$field[0]-spacer-1"}} . " spacers";
-        printf OUT ("$format_string", $field[0], $spacer_string, $field[1]);
+	$stop_coord = $stop_coord . " |\n";
+        print OUT "| ";
+	printf OUT ("$format_string", $field[0], $spacer_string, $field[1], $start_coord, $stop_coord);
     }
+    printf OUT ("$format_string2", "$dashes", "------------------+", "--------------------------+", "----------------+", "--------------+\n");
     print OUT "\n";
 }
 else {  print OUT "None...\n";}
-print OUT "Repeats matching known repeats..........$total_repeat out of $total_arrays\n";
+
+########## Printing spacer validated by repeat homology
+## Little more formatting again . . .
+$total_arrays =~ s/ .*//;
+$form_total = length($total_repeat) + length($total_arrays) + 8;
+if ($form_total <= 18) {
+    my $dif = 18 -$form_total;
+    for(my $i = 1; $i <= $dif; $i++) {
+	$total_arrays = $total_arrays . " ";
+    }
+}
+print OUT "+----------------------------------------------------------+
+| Repeats matching known repeats........$total_repeat out of $total_arrays |\n";
 if (@REPEAT) {
-    my $org_max = 0;
-    my $spcr_max = 0;
+    my $org_max = 8;
+    my $spcr_max = 16;
+    my $start_max = 14;
+    my $stop_max = 14;
     foreach my $i (@REPEAT) {
         chomp($i);
         my $format = $i;
         $format =~ s/-.*//;
+	my $coord = '';
+	if (exists $COORD{$format}) {$coord = $COORD{$format};}
+	my @CRD = split(/,/, $coord);
+	my $start_coord = $CRD[0];
+	my $stop_coord = $CRD[1];
 	my $spacer_string = scalar @{$seq_statistics{$i}} . " spacers";
 	if (length($format) > $org_max) {$org_max = length($format);}
 	if (length($spacer_string) > $spcr_max) {$spcr_max = length($spacer_string);}
+	if (length($start_coord) > $start_max) { $start_max = length($start_coord);}
+	if (length($stop_coord) > $stop_max) { $stop_max = length($stop_coord);}
     }
-    $spcr_max += 5;
-    my $format_string = "%" . $org_max . "s%" . $spcr_max . "s";
+    $spcr_max += 3;
+    $start_max += 3;
+    $stop_max += 3;
+    my $format_string = "%" . $org_max . "s%" . $spcr_max . "s%" . $start_max . "s%" . $stop_max . "s";
+    my $stop_max2 = $stop_max - 1;
+    my $format_string2 = "%" . $org_max . "s%" . $spcr_max . "s%" . $start_max . "s%" . $stop_max2 . "s";
+    my $dash_size = $org_max - 8;
+    my $dashes = "+---------";
+    my $seqseqname = "| SeqName";
+    if ($dash_size != 0) {
+	for (my $i=1;$i<=$dash_size;$i++) {
+	    $dashes = $dashes . "-";
+	    $seqseqname = $seqseqname . " ";
+	}
+    }
+    $dashes = $dashes . "+";
+    $seqseqname = $seqseqname . " |";
+    printf OUT ("$format_string2", "$dashes", "------------------+", "----------------+", "--------------+\n");
+    printf OUT ("$format_string2", "$seqseqname", "Spacers in Seq |", "Array Start |", "Array Stop |\n");
+    printf OUT ("$format_string2", "$dashes", "------------------+", "----------------+", "--------------+\n");
     foreach my $i (@REPEAT) {
         chomp($i);
         my $format = $i;
         $format =~ s/-.*//;
 	my $spacer_string = scalar @{$seq_statistics{$i}} . " spacers";
-        printf OUT ("$format_string\n", $format, $spacer_string)
+	my $start_coord = ' ';
+	my $stop_coord = ' ';
+	if (exists $COORD{$format}) {
+	    my $coord = $COORD{$format};
+	    my @CRD= split(/,/, $coord);
+	    $start_coord= $CRD[0];
+	    $stop_coord = $CRD[1];
+	}
+	$stop_coord = $stop_coord . " |\n";
+	print OUT "| ";
+        printf OUT ("$format_string", $format, $spacer_string, $start_coord, $stop_coord);
     }
+    printf OUT ("$format_string2", "$dashes", "------------------+", "----------------+", "--------------+\n");
     print OUT "\n";
 }
 else {  print OUT "None...\n";}
-print OUT "Spacers with Proper Statistics..........", scalar @STATISTICS, " out of $total_crispr\n";
+
+
+
+
+########## Printing spacer validated by proper statistics
+## Little more formatting again . . .
+$total_arrays =~ s/ .*//;
+$form_total = length(scalar @STATISTICS) + length($total_arrays) + 8;
+if ($form_total <= 18) {
+    my $dif = 18 -$form_total;
+    for(my $i = 1; $i <= $dif; $i++) {
+	$total_arrays = $total_arrays . " ";
+    }
+}
+print OUT "+----------------------------------------------------------+
+| Spacers with Proper Statistics........", scalar @STATISTICS, " out of $total_arrays |\n";
+
+
 if (@STATISTICS) {
-    my $org_max = 0;
-    my $spcr_max = 0;
+    my $org_max = 8;
+    my $spcr_max = 16;
+    my $start_max = 14;
+    my $stop_max = 14;
     foreach my $i (@STATISTICS) {
         my $format = $i;
         $format =~ s/-.*//;
+	my $coord = '';
+	if (exists $COORD{$format}) {$coord = $COORD{$format};}
+	my @CRD = split(/,/, $coord);
+	my $start_coord = $CRD[0];
+	my $stop_coord = $CRD[1];
         my $spacer_string = scalar @{$seq_statistics{$i}} . " spacers";
 	if (length($format) > $org_max) {$org_max = length($format);}
 	if (length($spacer_string) > $spcr_max) {$spcr_max = length($spacer_string);}
+	if (length($start_coord) > $start_max) { $start_max = length($start_coord);}
+	if (length($stop_coord) > $stop_max) { $stop_max = length($stop_coord);}
     }
-    $spcr_max += 5;
-    my $format_string = "%" . $org_max . "s%" . $spcr_max . "s";
+    $spcr_max += 3;
+    $start_max += 3;
+    $stop_max += 3;
+    my $format_string = "%" . $org_max . "s%" . $spcr_max . "s%" . $start_max . "s%" . $stop_max . "s";
+    my $stop_max2 = $stop_max - 1;
+    my $format_string2 = "%" . $org_max . "s%" . $spcr_max . "s%" . $start_max . "s%" . $stop_max2 . "s";
+    my $dash_size = $org_max - 8;
+    my $dashes = "+---------";
+    my $seqseqname = "| SeqName";
+    if ($dash_size != 0) {
+	for (my $i=1;$i<=$dash_size;$i++) {
+	    $dashes = $dashes . "-";
+	    $seqseqname = $seqseqname . " ";
+	}
+    }
+    $dashes = $dashes . "+";
+    $seqseqname = $seqseqname . " |";
+    printf OUT ("$format_string2", "$dashes", "------------------+", "----------------+", "--------------+\n");
+    printf OUT ("$format_string2", "$seqseqname", "Spacers in Seq |", "Array Start |", "Array Stop |\n");
+    printf OUT ("$format_string2", "$dashes", "------------------+", "----------------+", "--------------+\n");
     foreach my $i (@STATISTICS) {
         my $format = $i;
         $format =~ s/-.*//;
         my $spacer_string = scalar @{$seq_statistics{$i}} . " spacers";
-        printf OUT ("$format_string\n", $format, $spacer_string)
+        my $start_coord = ' ';
+	my $stop_coord = ' ';
+	if (exists $COORD{$format}) {
+	    my $coord = $COORD{$format};
+	    my @CRD= split(/,/, $coord);
+	    $start_coord= $CRD[0];
+	    $stop_coord = $CRD[1];
+	}
+	$stop_coord = $stop_coord . " |\n";
+	print OUT "| ";
+        printf OUT ("$format_string", $format, $spacer_string, $start_coord, $stop_coord);
     }
+    printf OUT ("$format_string2", "$dashes", "------------------+", "----------------+", "--------------+\n");
     print OUT "\n";
 }
 else {  print OUT "None...\n";}
 
-print OUT "
-Bonafide CRISPRs = ", scalar keys(%BONAFIDE), " out of $total_arrays = ";
-my $percent = &Round(scalar keys(%BONAFIDE)/$total_arrays, 4);
-$percent *= 100;
-print OUT "$percent%\n\n";
 
-## Begin printing of the exhaustive report
+
+########## Wrapping up the report
+## Little more formatting again . . .
+$total_arrays =~ s/ .*//;
+my $bonafide_crispr_array = scalar keys(%BONAFIDE);
+my $non_bonafide_crispr_array = $total_arrays - $bonafide_crispr_array;
+my $percent = &Round($bonafide_crispr_array/$total_arrays, 4);
+$percent *= 100;
+$percent = $percent . "%";
+
+if (length($bonafide_crispr_array) <= 18) {
+    my $dif = 18 -length($bonafide_crispr_array);
+    for(my $i = 1; $i <= $dif; $i++) {
+	$bonafide_crispr_array = $bonafide_crispr_array . " ";
+    }
+}
+if (length($non_bonafide_crispr_array) <= 18) {
+    my $dif = 18 -length($non_bonafide_crispr_array);
+    for(my $i = 1; $i <= $dif; $i++) {
+	$non_bonafide_crispr_array = $non_bonafide_crispr_array . " ";
+    }
+}
+if (length($percent) <= 18) {
+    my $dif = 18 -length($percent);
+    for(my $i = 1; $i <= $dif; $i++) {
+	$percent = $percent . " ";
+    }
+}
+print OUT "
++----------------------------------------------------------+
+| V A L I D A T I O N        S U M M A R Y                 |
++----------------------------------------------------------+
+| Bona Fide CRISPR arrays.............. $bonafide_crispr_array |
+| Non-Bona Fide CRISPR arrays.......... $non_bonafide_crispr_array |
+| Percent Bona Fide.................... $percent |
++----------------------------------------------------------+\n\n";
+
+
+
+
+########## Begin printing of the exhaustive report
+print OUT "
++----------------------------------------------------------+
+| E X H A U S T I V E      R E P O R T                     |
++----------------------------------------------------------+\n";
+
 my $ex_org_max = 8;
-my $ex_avg_max = 7;
-my $ex_stdev_max = 6;
+my $ex_avg_max = 15;
+my $ex_stdev_max = 15;
 while (($k, $v) = each(%seq_statistics)){
     my $f = $k;$f =~ s/-.*//;
     if (length($f) > $ex_org_max) { $ex_org_max = length($f);}
     if (length($AVG{$f}) > $ex_avg_max) {	$ex_avg_max = length($AVG{$f})}
     if (length($STD{$f}) > $ex_stdev_max) {	$ex_stdev_max = length($STD{$f})}
 }
-$ex_avg_max += 5;
-$ex_stdev_max += 5;
-my $first_format_string = "%" . $ex_org_max . "s%11" . "s%" . $ex_avg_max . "s%" . $ex_stdev_max . "s";
-print OUT "\nEXHAUSTIVE REPORT ON PUTATIVE CRISPRs\n\n";
-printf OUT ("$first_format_string\n", "Sequence", "CRISPR", "Average", "StdDev");
-printf OUT ("$first_format_string\n", "========", "======", "=======", "======");
+    $ex_avg_max += 3;
+    $ex_stdev_max += 3;
+    my $format_string = "%" . $ex_org_max . "s%19" . "s%" . $ex_avg_max . "s%" . $ex_stdev_max . "s";
+    my $ex_stdev_max2 = $ex_stdev_max;
+    my $format_string2 = "%" . $ex_org_max . "s%19" . "s%" . $ex_avg_max . "s%" . $ex_stdev_max2 . "s";
+    my $dash_size = $ex_org_max - 8;
+    my $dashes = "+---------";
+    my $seqseqname = "| SeqName";
+    if ($dash_size != 0) {
+	for (my $i=1;$i<=$dash_size;$i++) {
+	    $dashes = $dashes . "-";
+	    $seqseqname = $seqseqname . " ";
+	}
+    }
+    $dashes = $dashes . "+";
+    $seqseqname = $seqseqname . " |";
+    printf OUT ("$format_string2", "$dashes", "------------------+", "-----------------+", "----------------+\n");
+    printf OUT ("$format_string2", "$seqseqname", "Valid CRISPR? |", "Mean Spcr Len |", "Spcr Len Std |\n");
+    printf OUT ("$format_string2", "$dashes", "------------------+", "-----------------+", "----------------+\n");
+    
+
 while (($k, $v) = each(%seq_statistics)){
     my $f = $k;$f =~ s/-.*//;
+    my $stdstd = $STD{$f};
+    $stdstd = $stdstd . " |";
     if (exists $BONAFIDE{$f}) {
-	printf OUT ("$first_format_string\n", $f, "YES", $AVG{$f}, $STD{$f});
+	print OUT "| ";
+	printf OUT ("$format_string\n", $f, "YES", $AVG{$f}, $stdstd);
     }
-    else {  printf OUT ("$first_format_string\n", $f, "no", $AVG{$f}, $STD{$f});}
+    else {  print OUT "| ";printf OUT ("$format_string\n", $f, "no", $AVG{$f}, $stdstd);}
 }
+
+
 
 $header = "";
 $seq = "";
@@ -405,7 +710,7 @@ else {
 close(IN);
 print OUT qq{
 +---------------------------------------------------------------------------------+
-|                               END OF REPORT                                     |
+|                         E N D     O F     R E P O R T                           |
 +---------------------------------------------------------------------------------+
 REFERENCES:
 Bland C, Ramsey TL, Sabree F, Lowe M, Brown K, Kyrpides NC, Hugenholtz P:
@@ -416,10 +721,10 @@ The CRISPRdb database and tools to display CRISPRs and to generate
 	dictionaries of spacers and repeats. BMC Bioinformatics.
 	2007 May 23;8(1):172
 S.F. Altschul, W. Gish, W. Miller, E.W. Myers, D.J. Lipman, Basic local 
-        alignment search tool, J. Mol. Biol. 215 (1990) 403–410.
+        alignment search tool, J. Mol. Biol. 215 (1990) 403-410.
 Suzek,B.E., Huang,H., McGarvey,P., Mazumder,R. and Wu,C.H. (2007) UniRef:
 	comprehensive and non-Redundant UniProt reference clusters. Bioinformatics,
-	23, 1282Ð1288.
+	23, 1282�1288.
 };
 
 close(OUT);close(OUT2);close(OUT3);
