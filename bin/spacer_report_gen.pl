@@ -724,7 +724,7 @@ S.F. Altschul, W. Gish, W. Miller, E.W. Myers, D.J. Lipman, Basic local
         alignment search tool, J. Mol. Biol. 215 (1990) 403-410.
 Suzek,B.E., Huang,H., McGarvey,P., Mazumder,R. and Wu,C.H. (2007) UniRef:
 	comprehensive and non-Redundant UniProt reference clusters. Bioinformatics,
-	23, 1282Ð1288.
+	23, 1282D1288.
 };
 
 close(OUT);close(OUT2);close(OUT3);
