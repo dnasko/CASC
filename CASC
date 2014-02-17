@@ -39,6 +39,10 @@ Number of CPUs to use. Default = 1 (Optional)
 Be conservative with spacer calls. (Optional)
 By default CASC is liberal with calls.
 
+=item B<-v, --version>
+
+Displays the version. (Optional)
+
 =item B<-h, --help>
 
 Displays the usage message.  (Optional) 
@@ -65,7 +69,7 @@ Report bugs to dnasko@udel.edu
 
 =head1 COPYRIGHT
 
-Copyright 2012 Daniel Nasko.  
+Copyright 2014 Daniel Nasko.  
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.  
 This is free software: you are free to change and redistribute it.  
 There is NO WARRANTY, to the extent permitted by law.  
@@ -84,10 +88,10 @@ use FindBin;
 use Cwd 'abs_path';
 use lib abs_path("$FindBin::Bin/bin/lib");
 use threads;
-my $version = "2.2";
+my $version = "2.3";
 
 ## ARGUMENTS WITH NO DEFAULT
-my($infile,$conservative,$help,$manual);
+my($infile,$conservative,$ver,$help,$manual);
 ## ARGUMENTS WITH DEFAULT
 my $outdir = "./casc_output/";
 my $ncpus = 1;
@@ -97,12 +101,14 @@ GetOptions (
 				"o|outdir=s"	 =>	\$outdir,
                                 "c|conservative" =>     \$conservative,
                                 "n|ncpus=i"	 =>	\$ncpus,
-				"h|help"	 =>	\$help,
+                                "v|version"      =>     \$ver,
+                                "h|help"	 =>	\$help,
 				"m|manual"	 =>	\$manual);
 
 ## VALIDATE ARGS
 pod2usage(-verbose => 2)  if ($manual);
 pod2usage(-verbose => 1)  if ($help);
+if ($ver) { die "\n CASC Version: $version\n\n";}
 pod2usage( -msg  => "\n\n ERROR!  Required argument --in not found.\n", -exitval => 2, -verbose => 1)  if (! $infile );
 unless (-e $infile) {die "\n\n ERROR: The input file $infile does not appear to exist\n\n";}
 if ($conservative) { $conservative = "yes";$calling = "Conservative";}
@@ -111,8 +117,8 @@ else { $conservative = "no";}
 ## Global Variables
 my $MAX = 100;					## used for the progress bar
 my $PRGS = 0;
-my $UniRefDB = "UniRef_CAS_31Mar13";		## UniRef DB Version
-my $RepeatDB = "CrFinderRepeatDB_29Jan13";	## CRISPR DB Version
+my $UniRefDB = "UniRef_CAS_17Feb2014";		## UniRef DB Version
+my $RepeatDB = "CrFinderRepeatDB_17Feb2014";	## CRISPR DB Version
 my %SPACER_ID;
 my (@THREADS,@FILES);
 my ($NUMBER_OF_SEQS,$NUMBER_OF_BASES) = 0;
