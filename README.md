@@ -1,5 +1,4 @@
-CASC: A CRISPR Detection Tool
-=============================
+![alt text](https://github.com/dnasko/CASC/blob/master/images/casc_logo.png?raw=true "CASC")
 
 Welcome to CASC, an all-in-one CRISPR detection and validation
 tool designed for CRISPR discovery in metagenomic or genomic reads or contigs.
