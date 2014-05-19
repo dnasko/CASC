@@ -27,13 +27,17 @@ and start using CASC.
 ### NOTE: CASC was written on Mac OS, and therefore will only work on UNIX-based operating systems (e.g. Mac OS, Linux).
 Future versions will be Windows friendly (hopefully).
 
-To download, simply pull the CASC repository from GitHub. If you do not
-know how to do this see https://help.github.com/articles/using-pull-requests
+To download, simply clone the CASC repository from GitHub. From the commandline
+simply type:
+
+`$ git clone git@github.com:dnasko/CASC.git`
+
+And CASC will be cloned to your working directory.
 
 [2] Installing CASC and its Dependencies
 ----------------------------------------
 
-Once you have downloaded the repository you should see two files and three directories:
+Once you have downloaded the repository you should see two files and four directories:
 
   * `CASC` the executable Perl script.
 
@@ -45,7 +49,9 @@ Once you have downloaded the repository you should see two files and three direc
 
   * `/example` contains three example FASTA files to test CASC with
 
-### CASC HAS ONLY ONE DEPENDENCY, and it's BLAST. You will need to have a local copy of BLAST installed on your machine, and have you PATH pointing to it. ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
+  * `/images` contains the CASC logo
+
+### CASC HAS ONLY ONE DEPENDENCY, and it's BLAST. You will need to have a local copy of BLAST installed on your machine, and have its location in your PATH. ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 
 Assuming you have Perl installed on your machine (and BLAST) you need only
 to execute the following command to display CASC's help / usage:
@@ -59,7 +65,7 @@ Say you have a recently sequenced genome, or well assembled metagenomic reads
 saved in a file `TestSeqs.nuc.fasta` and you would like to find CRISPR spacers
 within this genome or library. You would execute the following:
 
-    ./CASC --in=/Path/to/TestSeqs.nuc.fasta
+    ./CASC --in=example/a_few_crisprs.fasta
 
 CASC does come with three optional arguments, allowing you to explicitly specify
 where the output files will be saved, as well as how many CPUs you would like
