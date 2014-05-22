@@ -195,7 +195,7 @@ for(1 .. $ncpus) {
 foreach my $file (@FILES) {
     my $mod_file = $file;
     $mod_file =~ s/.*\///;
-    my $job = qq|java -jar -Xms128M -Xmx2G $script_working_dir/bin/mCRT1.5.jar $file $outdir/component_processes/mCRT/$mod_file.raw >> $outdir/component_processes/mCRT/$infile_root.stdout|;
+    my $job = qq|java -jar -Xms128M -Xmx2G $script_working_dir/bin/CRT1.2b.jar $file $outdir/component_processes/mCRT/$mod_file.raw >> $outdir/component_processes/mCRT/$infile_root.stdout|;
     push (@THREADS, threads->create('task',"$job"));
 }
 foreach my $thread (@THREADS) {
