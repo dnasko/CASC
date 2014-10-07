@@ -39,6 +39,11 @@ Number of CPUs to use. Default = 1 (Optional)
 Be conservative with spacer calls. (Optional)
 By default CASC is liberal with calls.
 
+=item B<-s, --silent>
+
+Do not print status updates to screen. (Optional)
+By default CASC will print status updates.
+
 =item B<-v, --version>
 
 Displays the version. (Optional)
@@ -88,7 +93,7 @@ use FindBin;
 use Cwd 'abs_path';
 use lib abs_path("$FindBin::Bin/bin/lib");
 use threads;
-my $version = "2.3";
+my $version = "2.4";
 
 ## ARGUMENTS WITH NO DEFAULT
 my($infile,$conservative,$ver,$help,$manual);
@@ -117,8 +122,8 @@ else { $conservative = "no";}
 ## Global Variables
 my $MAX = 100;					## used for the progress bar
 my $PRGS = 0;
-my $UniRefDB = "UniRef_CAS_17Feb2014";		## UniRef DB Version
-my $RepeatDB = "CrFinderRepeatDB_17Feb2014";	## CRISPR DB Version
+my $UniRefDB = "UniRef_CAS_07Oct2014";		## UniRef DB Version
+my $RepeatDB = "RepeatDB_07Oct2014";	        ## CRISPR DB Version
 my %SPACER_ID;
 my (@THREADS,@FILES);
 my ($NUMBER_OF_SEQS,$NUMBER_OF_BASES) = 0;
