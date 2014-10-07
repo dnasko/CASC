@@ -108,7 +108,7 @@ GetOptions (
 ## VALIDATE ARGS
 pod2usage(-verbose => 2)  if ($manual);
 pod2usage(-verbose => 1)  if ($help);
-if ($ver) { binmode(STDOUT, ":utf8"); print " CASC \x{1F37A}\n"; die " Version: $version\n\n";}
+if ($ver) { print " CASC\n"; die " Version: $version\n\n"; }
 pod2usage( -msg  => "\n\n ERROR!  Required argument --in not found.\n", -exitval => 2, -verbose => 1)  if (! $infile );
 unless (-e $infile) {die "\n\n ERROR: The input file $infile does not appear to exist\n\n";}
 if ($conservative) { $conservative = "yes";$calling = "Conservative";}
@@ -152,8 +152,7 @@ print `mkdir -p $outdir/component_processes/split_multifasta`;
 ##                   MAIN                       ##
 ##################################################
 ## Initialze
-binmode(STDOUT, ":utf8"); print "\n CASC \x{1F37A}\n";
-print " Version: $version\n CRISPR Calling: $calling\n\n";
+print "\n CASC\n Version: $version\n CRISPR Calling: $calling\n\n";
 progress_bar( 1, $MAX, 50, '=' );
 
 ## Gather some basic statistics on the input
