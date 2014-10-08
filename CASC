@@ -96,7 +96,7 @@ use threads;
 my $version = "2.4";
 
 ## ARGUMENTS WITH NO DEFAULT
-my($infile,$conservative,$ver,$help,$manual);
+my($infile,$conservative,$silent,$ver,$help,$manual);
 ## ARGUMENTS WITH DEFAULT
 my $outdir = "./casc_output/";
 my $ncpus = 1;
@@ -106,6 +106,7 @@ GetOptions (
 				"o|outdir=s"	 =>	\$outdir,
                                 "c|conservative" =>     \$conservative,
                                 "n|ncpus=i"	 =>	\$ncpus,
+                                "s|silent"       =>     \$silent,
                                 "v|version"      =>     \$ver,
                                 "h|help"	 =>	\$help,
 				"m|manual"	 =>	\$manual);
@@ -157,7 +158,9 @@ print `mkdir -p $outdir/component_processes/split_multifasta`;
 ##                   MAIN                       ##
 ##################################################
 ## Initialze
-print "\n CASC\n Version: $version\n CRISPR Calling: $calling\n\n";
+unless ($silent) {
+    print "\n CASC\n Version: $version\n CRISPR Calling: $calling\n\n";
+}
 progress_bar( 1, $MAX, 50, '=' );
 
 ## Gather some basic statistics on the input
@@ -181,7 +184,9 @@ progress_bar( $PRGS, $MAX, 50, '=' );
 
 ## Split up the FASTA file
 if ($NUMBER_OF_SEQS < $ncpus) {
-    print "\n\n Warning: You cannot select more CPUs than you have input sequences\n ncpus = $ncpus\n seqs  = $NUMBER_OF_SEQS\n ncpus adjusted to $NUMBER_OF_SEQS\n\n";
+    unless ($silent) {
+	print "\n\n Warning: You cannot select more CPUs than you have input sequences\n ncpus = $ncpus\n seqs  = $NUMBER_OF_SEQS\n ncpus adjusted to $NUMBER_OF_SEQS\n\n";
+    }
     $ncpus = $NUMBER_OF_SEQS;
 }
 my $seqs_per_file = $NUMBER_OF_SEQS / $ncpus; ## Need to round this up . . . 
@@ -199,7 +204,7 @@ for(1 .. $ncpus) {
 foreach my $file (@FILES) {
     my $mod_file = $file;
     $mod_file =~ s/.*\///;
-    my $job = qq|java -jar -Xms128M -Xmx2G $script_working_dir/bin/CRT1.2b.jar $file $outdir/component_processes/mCRT/$mod_file.raw|;
+    my $job = qq|java -jar -Xms128M -Xmx512M $script_working_dir/bin/CRT1.2b.jar $file $outdir/component_processes/mCRT/$mod_file.raw|;
     push (@THREADS, threads->create('task',"$job"));
 }
 foreach my $thread (@THREADS) {
@@ -207,6 +212,7 @@ foreach my $thread (@THREADS) {
     $PRGS+=(25/$ncpus);
     progress_bar( $PRGS, $MAX, 50, '=' );
 }
+if (-e "$outdir/component_processes/mCRT/$infile_root.raw") { print `rm $outdir/component_processes/mCRT/$infile_root.raw`;}
 print `cat $outdir/component_processes/mCRT/*.raw > $outdir/component_processes/mCRT/$infile_root.raw`;
 foreach my $file (@FILES) {
     my $mod_file = $file;
@@ -218,7 +224,7 @@ print `cat $infile_root-*.spacer.fsa > $outdir/component_processes/mCRT/$infile_
 print `rm $infile_root-*.repeat.fsa`;
 print `rm $infile_root-*.spacer.fsa`;
 my $putative_spacers = `grep -c ">" $outdir/component_processes/mCRT/$infile_root.spacer.fsa`; chomp($putative_spacers);
-if ($putative_spacers == 0) {	progress_bar( $MAX, $MAX, 50, '=' ); die my $death = death(); print $death;}
+if ($putative_spacers == 0) {	progress_bar( $MAX, $MAX, 50, '=' ); if ($silent) { exit 0; } else { die my $death = death(); print $death;}}
 
 ## Create Remaining Output Directories
 print `mkdir -p $outdir/component_processes/blastn`;
@@ -267,7 +273,9 @@ progress_bar( $PRGS, $MAX, 50, '=' );
 print `rm $outdir/component_processes/split_multifasta/*`;
 my $number_of_sequences = `grep -c ">" $outdir/component_processes/mCRT/$infile_root.repeat.fsa`;
 if ($number_of_sequences < $ncpus) {
-    print "\n\n Warning: Too few repeats for ncpus\n ncpus = $ncpus\n seqs  = $number_of_sequences\n ncpus adjusted to $number_of_sequences\n\n";
+    unless ($silent) {
+	print "\n\n Warning: Too few repeats for ncpus\n ncpus = $ncpus\n seqs  = $number_of_sequences\n ncpus adjusted to $number_of_sequences\n\n";
+    }
     $ncpus = $number_of_sequences;
 }
 $seqs_per_file = $number_of_sequences / $ncpus; ## Need to round this up . . . 
@@ -306,8 +314,10 @@ print `cat $outdir/component_processes/blastn/*.fsa.* > $outdir/component_proces
 print `rm $outdir/component_processes/split_multifasta/*`;
 $number_of_sequences = `grep -c ">" $outdir/component_processes/extract_sequence/$infile_root.fasta`;
 if ($number_of_sequences < $ncpus) {
-    print "\n\n Warning: Too few Cas sequences for ncpus\n ncpus = $ncpus\n seqs  = $number_of_sequences\n ncpus adjusted to $number_of_sequences\n\n";
-    $ncpus = $number_of_sequences;
+   unless ($silent) {
+       print "\n\n Warning: Too few Cas sequences for ncpus\n ncpus = $ncpus\n seqs  = $number_of_sequences\n ncpus adjusted to $number_of_sequences\n\n";
+   }    
+   $ncpus = $number_of_sequences;
 }
 $seqs_per_file = $number_of_sequences / $ncpus; ## Need to round this up . . . 
 unless ($seqs_per_file == int($seqs_per_file)) {
@@ -386,11 +396,15 @@ progress_bar( $MAX, $MAX, 50, '=' );
 
 if (-z "$outdir/$infile_root.bonafide.spacer.fasta") {
     my $no_bonafide = no_bonafide();
-    print $no_bonafide;
+    unless ($silent) {
+	print $no_bonafide;
+    }
 }
 else {
     my $suc_complete = complete();
-    print $suc_complete;
+    unless ($silent) {
+	print $suc_complete;
+    }
 }
 ##################################################
 ##                SUBROUTINES                   ##
@@ -417,9 +431,11 @@ sub progress_bar
     $char  ||= '=';
     my $num_width = length $total;
     local $| = 1;
-    printf "|%-${width}s| (%.2f%%)\r", 
-        $char x (($width-1)*$got/$total). '>', $got, $total, 100*$got/
-	    +$total;
+    unless ($silent) {
+	printf "|%-${width}s| (%.2f%%)\r", 
+              $char x (($width-1)*$got/$total). '>', $got, $total, 100*$got/
+	      +$total;
+    }
 }
 sub task
 {
