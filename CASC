@@ -291,15 +291,17 @@ for(1 .. $ncpus) {
 
 ## Perform a BLASTn of the repeats of putative spacers
 foreach my $file (@FILES) {
-    my $sub_root = $file;
-    $sub_root =~ s/.*\///;
-    my $blastn_string = "blastn -query $file ";
-    $blastn_string .= "-db $script_working_dir/BlastDBs/$RepeatDB ";
-    $blastn_string .= "-out $outdir/component_processes/blastn/$sub_root.btab ";
-    $blastn_string .= "-evalue 1e-5 ";
-    $blastn_string .= "-word_size 4 ";
-    $blastn_string .= "-outfmt 6";
-    push (@THREADS, threads->create('task',"$blastn_string"));
+    if ( -e $file ) {
+	my $sub_root = $file;
+	$sub_root =~ s/.*\///;
+	my $blastn_string = "blastn -query $file ";
+	$blastn_string .= "-db $script_working_dir/BlastDBs/$RepeatDB ";
+	$blastn_string .= "-out $outdir/component_processes/blastn/$sub_root.btab ";
+	$blastn_string .= "-evalue 1e-5 ";
+	$blastn_string .= "-word_size 4 ";
+	$blastn_string .= "-outfmt 6";
+	push (@THREADS, threads->create('task',"$blastn_string"));
+    }
 }
 foreach my $thread (@THREADS) {
     $thread->join();
@@ -332,14 +334,16 @@ for(1 .. $ncpus) {
 
 ## Perform a BLASTx of original sequences with putative spacers to find Cas proteins upstream
 foreach my $file (@FILES) {
-    my $sub_root = $file;
-    $sub_root =~ s/.*\///;
-    my $blastx_string = "blastx -query $file ";
-    $blastx_string .= "-db $script_working_dir/BlastDBs/$UniRefDB ";
-    $blastx_string .= "-out $outdir/component_processes/blastx/$sub_root.btab ";
-    $blastx_string .= "-evalue 1e-12 ";
-    $blastx_string .= "-outfmt 6";
-    push (@THREADS, threads->create('task',"$blastx_string"))
+    if ( -e $file ) {
+	my $sub_root = $file;
+	$sub_root =~ s/.*\///;
+	my $blastx_string = "blastx -query $file ";
+	$blastx_string .= "-db $script_working_dir/BlastDBs/$UniRefDB ";
+	$blastx_string .= "-out $outdir/component_processes/blastx/$sub_root.btab ";
+	$blastx_string .= "-evalue 1e-12 ";
+	$blastx_string .= "-outfmt 6";
+	push (@THREADS, threads->create('task',"$blastx_string"))
+    }
 }
 foreach my $thread (@THREADS) {
     $thread->join();
