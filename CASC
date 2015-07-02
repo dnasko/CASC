@@ -39,6 +39,11 @@ Number of CPUs to use. Default = 1 (Optional)
 Be conservative with spacer calls. (Optional)
 By default CASC is liberal with calls.
 
+=item B<-s, --silent>
+
+Do not print status updates to screen. (Optional)
+By default CASC will print status updates.
+
 =item B<-v, --version>
 
 Displays the version. (Optional)
@@ -88,10 +93,10 @@ use FindBin;
 use Cwd 'abs_path';
 use lib abs_path("$FindBin::Bin/bin/lib");
 use threads;
-my $version = "2.3";
+my $version = "2.4";
 
 ## ARGUMENTS WITH NO DEFAULT
-my($infile,$conservative,$ver,$help,$manual);
+my($infile,$conservative,$silent,$ver,$help,$manual);
 ## ARGUMENTS WITH DEFAULT
 my $outdir = "./casc_output/";
 my $ncpus = 1;
@@ -101,6 +106,7 @@ GetOptions (
 				"o|outdir=s"	 =>	\$outdir,
                                 "c|conservative" =>     \$conservative,
                                 "n|ncpus=i"	 =>	\$ncpus,
+                                "s|silent"       =>     \$silent,
                                 "v|version"      =>     \$ver,
                                 "h|help"	 =>	\$help,
 				"m|manual"	 =>	\$manual);
@@ -117,8 +123,8 @@ else { $conservative = "no";}
 ## Global Variables
 my $MAX = 100;					## used for the progress bar
 my $PRGS = 0;
-my $UniRefDB = "UniRef_CAS_17Feb2014";		## UniRef DB Version
-my $RepeatDB = "CrFinderRepeatDB_17Feb2014";	## CRISPR DB Version
+my $UniRefDB = "UniRef_CAS_07Oct2014";		## UniRef DB Version
+my $RepeatDB = "RepeatDB_07Oct2014";	        ## CRISPR DB Version
 my %SPACER_ID;
 my (@THREADS,@FILES);
 my ($NUMBER_OF_SEQS,$NUMBER_OF_BASES) = 0;
@@ -152,7 +158,9 @@ print `mkdir -p $outdir/component_processes/split_multifasta`;
 ##                   MAIN                       ##
 ##################################################
 ## Initialze
-print "\n CASC\n Version: $version\n CRISPR Calling: $calling\n\n";
+unless ($silent) {
+    print "\n CASC\n Version: $version\n CRISPR Calling: $calling\n\n";
+}
 progress_bar( 1, $MAX, 50, '=' );
 
 ## Gather some basic statistics on the input
@@ -176,7 +184,9 @@ progress_bar( $PRGS, $MAX, 50, '=' );
 
 ## Split up the FASTA file
 if ($NUMBER_OF_SEQS < $ncpus) {
-    print "\n\n Warning: You cannot select more CPUs than you have input sequences\n ncpus = $ncpus\n seqs  = $NUMBER_OF_SEQS\n ncpus adjusted to $NUMBER_OF_SEQS\n\n";
+    unless ($silent) {
+	print "\n\n Warning: You cannot select more CPUs than you have input sequences\n ncpus = $ncpus\n seqs  = $NUMBER_OF_SEQS\n ncpus adjusted to $NUMBER_OF_SEQS\n\n";
+    }
     $ncpus = $NUMBER_OF_SEQS;
 }
 my $seqs_per_file = $NUMBER_OF_SEQS / $ncpus; ## Need to round this up . . . 
@@ -194,7 +204,7 @@ for(1 .. $ncpus) {
 foreach my $file (@FILES) {
     my $mod_file = $file;
     $mod_file =~ s/.*\///;
-    my $job = qq|java -jar -Xms128M -Xmx2G $script_working_dir/bin/CRT1.2b.jar $file $outdir/component_processes/mCRT/$mod_file.raw|;
+    my $job = qq|java -jar -Xms128M -Xmx512M $script_working_dir/bin/CRT1.2b.jar $file $outdir/component_processes/mCRT/$mod_file.raw|;
     push (@THREADS, threads->create('task',"$job"));
 }
 foreach my $thread (@THREADS) {
@@ -202,6 +212,7 @@ foreach my $thread (@THREADS) {
     $PRGS+=(25/$ncpus);
     progress_bar( $PRGS, $MAX, 50, '=' );
 }
+if (-e "$outdir/component_processes/mCRT/$infile_root.raw") { print `rm $outdir/component_processes/mCRT/$infile_root.raw`;}
 print `cat $outdir/component_processes/mCRT/*.raw > $outdir/component_processes/mCRT/$infile_root.raw`;
 foreach my $file (@FILES) {
     my $mod_file = $file;
@@ -213,7 +224,7 @@ print `cat $infile_root-*.spacer.fsa > $outdir/component_processes/mCRT/$infile_
 print `rm $infile_root-*.repeat.fsa`;
 print `rm $infile_root-*.spacer.fsa`;
 my $putative_spacers = `grep -c ">" $outdir/component_processes/mCRT/$infile_root.spacer.fsa`; chomp($putative_spacers);
-if ($putative_spacers == 0) {	progress_bar( $MAX, $MAX, 50, '=' ); die my $death = death(); print $death;}
+if ($putative_spacers == 0) {	progress_bar( $MAX, $MAX, 50, '=' ); if ($silent) { exit 0; } else { die my $death = death(); print $death;}}
 
 ## Create Remaining Output Directories
 print `mkdir -p $outdir/component_processes/blastn`;
@@ -262,7 +273,9 @@ progress_bar( $PRGS, $MAX, 50, '=' );
 print `rm $outdir/component_processes/split_multifasta/*`;
 my $number_of_sequences = `grep -c ">" $outdir/component_processes/mCRT/$infile_root.repeat.fsa`;
 if ($number_of_sequences < $ncpus) {
-    print "\n\n Warning: Too few repeats for ncpus\n ncpus = $ncpus\n seqs  = $number_of_sequences\n ncpus adjusted to $number_of_sequences\n\n";
+    unless ($silent) {
+	print "\n\n Warning: Too few repeats for ncpus\n ncpus = $ncpus\n seqs  = $number_of_sequences\n ncpus adjusted to $number_of_sequences\n\n";
+    }
     $ncpus = $number_of_sequences;
 }
 $seqs_per_file = $number_of_sequences / $ncpus; ## Need to round this up . . . 
@@ -278,15 +291,17 @@ for(1 .. $ncpus) {
 
 ## Perform a BLASTn of the repeats of putative spacers
 foreach my $file (@FILES) {
-    my $sub_root = $file;
-    $sub_root =~ s/.*\///;
-    my $blastn_string = "blastn -query $file ";
-    $blastn_string .= "-db $script_working_dir/BlastDBs/$RepeatDB ";
-    $blastn_string .= "-out $outdir/component_processes/blastn/$sub_root.btab ";
-    $blastn_string .= "-evalue 1e-5 ";
-    $blastn_string .= "-word_size 4 ";
-    $blastn_string .= "-outfmt 6";
-    push (@THREADS, threads->create('task',"$blastn_string"));
+    if ( -e $file ) {
+	my $sub_root = $file;
+	$sub_root =~ s/.*\///;
+	my $blastn_string = "blastn -query $file ";
+	$blastn_string .= "-db $script_working_dir/BlastDBs/$RepeatDB ";
+	$blastn_string .= "-out $outdir/component_processes/blastn/$sub_root.btab ";
+	$blastn_string .= "-evalue 1e-5 ";
+	$blastn_string .= "-word_size 4 ";
+	$blastn_string .= "-outfmt 6";
+	push (@THREADS, threads->create('task',"$blastn_string"));
+    }
 }
 foreach my $thread (@THREADS) {
     $thread->join();
@@ -301,8 +316,10 @@ print `cat $outdir/component_processes/blastn/*.fsa.* > $outdir/component_proces
 print `rm $outdir/component_processes/split_multifasta/*`;
 $number_of_sequences = `grep -c ">" $outdir/component_processes/extract_sequence/$infile_root.fasta`;
 if ($number_of_sequences < $ncpus) {
-    print "\n\n Warning: Too few Cas sequences for ncpus\n ncpus = $ncpus\n seqs  = $number_of_sequences\n ncpus adjusted to $number_of_sequences\n\n";
-    $ncpus = $number_of_sequences;
+   unless ($silent) {
+       print "\n\n Warning: Too few Cas sequences for ncpus\n ncpus = $ncpus\n seqs  = $number_of_sequences\n ncpus adjusted to $number_of_sequences\n\n";
+   }    
+   $ncpus = $number_of_sequences;
 }
 $seqs_per_file = $number_of_sequences / $ncpus; ## Need to round this up . . . 
 unless ($seqs_per_file == int($seqs_per_file)) {
@@ -317,14 +334,16 @@ for(1 .. $ncpus) {
 
 ## Perform a BLASTx of original sequences with putative spacers to find Cas proteins upstream
 foreach my $file (@FILES) {
-    my $sub_root = $file;
-    $sub_root =~ s/.*\///;
-    my $blastx_string = "blastx -query $file ";
-    $blastx_string .= "-db $script_working_dir/BlastDBs/$UniRefDB ";
-    $blastx_string .= "-out $outdir/component_processes/blastx/$sub_root.btab ";
-    $blastx_string .= "-evalue 1e-12 ";
-    $blastx_string .= "-outfmt 6";
-    push (@THREADS, threads->create('task',"$blastx_string"))
+    if ( -e $file ) {
+	my $sub_root = $file;
+	$sub_root =~ s/.*\///;
+	my $blastx_string = "blastx -query $file ";
+	$blastx_string .= "-db $script_working_dir/BlastDBs/$UniRefDB ";
+	$blastx_string .= "-out $outdir/component_processes/blastx/$sub_root.btab ";
+	$blastx_string .= "-evalue 1e-12 ";
+	$blastx_string .= "-outfmt 6";
+	push (@THREADS, threads->create('task',"$blastx_string"))
+    }
 }
 foreach my $thread (@THREADS) {
     $thread->join();
@@ -381,11 +400,15 @@ progress_bar( $MAX, $MAX, 50, '=' );
 
 if (-z "$outdir/$infile_root.bonafide.spacer.fasta") {
     my $no_bonafide = no_bonafide();
-    print $no_bonafide;
+    unless ($silent) {
+	print $no_bonafide;
+    }
 }
 else {
     my $suc_complete = complete();
-    print $suc_complete;
+    unless ($silent) {
+	print $suc_complete;
+    }
 }
 ##################################################
 ##                SUBROUTINES                   ##
@@ -412,9 +435,11 @@ sub progress_bar
     $char  ||= '=';
     my $num_width = length $total;
     local $| = 1;
-    printf "|%-${width}s| (%.2f%%)\r", 
-        $char x (($width-1)*$got/$total). '>', $got, $total, 100*$got/
-	    +$total;
+    unless ($silent) {
+	printf "|%-${width}s| (%.2f%%)\r", 
+              $char x (($width-1)*$got/$total). '>', $got, $total, 100*$got/
+	      +$total;
+    }
 }
 sub task
 {

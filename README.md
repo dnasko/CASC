@@ -25,7 +25,6 @@ and start using CASC.
 --------------------
 
 ### NOTE: CASC was written on Mac OS, and therefore will only work on UNIX-based operating systems (e.g. Mac OS, Linux).
-Future versions will be Windows friendly (hopefully).
 
 To download, simply clone the CASC repository from GitHub. From the commandline
 simply type:
@@ -82,7 +81,8 @@ to a new folder on our home directory, using 4 CPUs, and calling CRISPRs conserv
 CASC is routinely updated in an effort to assure that you are validating CRISPRs
 with the most up-to-date versions of UniRef and CRISPR DB:
 
-     Version 2.3 (17Feb2014) == [CRISPR DB 17Feb2014] [UniRef 17Feb2014] added -v argument
+     Version 2.4 (07Oct2014) == [Repeat DB 07Oct2014, now includes predicted DR's] [UniRef 07Oct2014] added -silent argument
+     Version 2.3 (17Feb2014) -- [CRISPR DB 17Feb2014] [UniRef 17Feb2014] added -v argument
      Version 2.2 (02Jun2013) -- Improved report formatting and added array coordinates to each array
      Version 2.1 (09Apr2013) -- Various bug fixs, improved report format
      Version 2.0 (22Mar2013) -- Improved multithreading function
