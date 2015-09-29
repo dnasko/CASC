@@ -86,6 +86,7 @@ usage <http://bioinformatics.udel.edu/Core/Acknowledge>.
 
 use strict;
 use warnings;
+use POSIX;
 use Getopt::Long;
 use File::Basename;
 use Pod::Usage;
@@ -93,7 +94,7 @@ use FindBin;
 use Cwd 'abs_path';
 use lib abs_path("$FindBin::Bin/bin/lib");
 use threads;
-my $version = "2.4";
+my $version = "2.5";
 
 ## ARGUMENTS WITH NO DEFAULT
 my($infile,$conservative,$silent,$ver,$help,$manual);
@@ -190,9 +191,11 @@ if ($NUMBER_OF_SEQS < $ncpus) {
     $ncpus = $NUMBER_OF_SEQS;
 }
 my $seqs_per_file = $NUMBER_OF_SEQS / $ncpus; ## Need to round this up . . . 
-unless ($seqs_per_file == int($seqs_per_file)) {
-    $seqs_per_file = int(++$seqs_per_file);
-}
+# unless ($seqs_per_file == int($seqs_per_file)) {
+#     $seqs_per_file = int(++$seqs_per_file);
+# }
+$seqs_per_file = ceil($seqs_per_file);
+# print "\n\n HEY, there are $NUMBER_OF_SEQS seqs\n\n This is how many sequences per file: $seqs_per_file\n\n";
 print `perl $script_working_dir/bin/splitFASTA.pl $infile $outdir/component_processes/split_multifasta $infile_root $seqs_per_file >$outdir/component_processes/split_multifasta/stdout`;
 for(1 .. $ncpus) {
     my $file_name = "$outdir/component_processes/split_multifasta/$infile_root" . "-" . "$_.fsa";
