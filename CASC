@@ -60,7 +60,10 @@ Displays full manual.  (Optional)
 
 =head1 DEPENDENCIES
 
-Requires the following Perl libraries.
+Requires the following Perl libraries:
+
+ POSIX
+ threads
 
 
 =head1 AUTHOR
@@ -74,7 +77,7 @@ Report bugs to dnasko@udel.edu
 
 =head1 COPYRIGHT
 
-Copyright 2014 Daniel Nasko.  
+Copyright 2015 Daniel Nasko.  
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.  
 This is free software: you are free to change and redistribute it.  
 There is NO WARRANTY, to the extent permitted by law.  
@@ -92,7 +95,9 @@ use File::Basename;
 use Pod::Usage;
 use FindBin;
 use Cwd 'abs_path';
-use lib abs_path("$FindBin::Bin/bin/lib");
+if ( -d abs_path("$FindBin::Bin/casc_bin/") ) {
+    use lib abs_path("$FindBin::Bin/casc_bin/lib");
+}
 use threads;
 my $version = "2.5";
 
@@ -124,7 +129,7 @@ else { $conservative = "no";}
 ## Global Variables
 my $MAX = 100;					## used for the progress bar
 my $PRGS = 0;
-my $UniRefDB = "UniRef_CAS_07Oct2014";		## UniRef DB Version
+my $UniRefDB = "UniRef_Cas_29Sep2015";		## UniRef DB Version
 my $RepeatDB = "RepeatDB_07Oct2014";	        ## CRISPR DB Version
 my %SPACER_ID;
 my (@THREADS,@FILES);
@@ -134,19 +139,25 @@ my ($NUMBER_OF_SEQS,$NUMBER_OF_BASES) = 0;
 my $BLASTN = `which blastn`; unless ($BLASTN =~ m/blastn/) {	die "\n\n ERROR: External dependency 'blastn' not installed in system PATH\n\n (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/)\n\n";}
 my $BLASTX = `which blastx`; unless ($BLASTX =~ m/blastx/) {	die "\n\n ERROR: External dependency 'blastx' not installed in system PATH\n\n (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/)\n\n";}
 
-## Format script's working directory and see what time it is
+## Check to see that the casc_bin and casc_blast_dbs directories are in the programs working directory
 my $script_working_dir = $FindBin::Bin;
+unless ( -d "$script_working_dir/casc_bin" ) { die "\n ERROR: Cannot find CASC's bin directory \"casc_bin\" in the same directory as the Perl script\n\n @@ How did this happen? @@ \n\n You've either moved the Perl script or are using a symbolic " .
+						   "link to the script.\n In order for CASC to run properly the Perl script, bin directory, and BLAST directory must all be in the same directory."; }
+unless ( -d "$script_working_dir/casc_blast_dbs" ) { die "\n ERROR: Cannot find CASC's blast directory \"casc_blast_dbs\" in the same directory as the Perl script\n\n @@ How did this happen? @@ \n\n You've either moved the Perl script or are " . 
+							 "using a symbolic link to the script.\n In order for CASC to run properly the Perl script, bin directory, and BLAST directory must all be in the same directory."; }
+
+## What time is it?
 my $DATE = dateTime();
 
 ## Format the infile's root
-my $infile_root = $infile;
-$infile_root =~ s/^.*\///;
-my @root_parts = split(/\./, $infile_root);
-pop @root_parts;
-$infile_root = join '.', @root_parts;
+my $infile_root = basename($infile);
+$infile_root = scalar reverse ($infile_root);
+$infile_root =~ s/.*?\.//;
+$infile_root = scalar reverse ($infile_root);
 
 ## If user did not specify an output directory, set up the default
 if ($outdir =~ "./casc_output/") {
+    print `mkdir -p $outdir`;                       ## need to create ./casc_output
     $outdir = "./casc_output/$infile_root-$DATE/";
 }
 
@@ -190,13 +201,10 @@ if ($NUMBER_OF_SEQS < $ncpus) {
     }
     $ncpus = $NUMBER_OF_SEQS;
 }
-my $seqs_per_file = $NUMBER_OF_SEQS / $ncpus; ## Need to round this up . . . 
-# unless ($seqs_per_file == int($seqs_per_file)) {
-#     $seqs_per_file = int(++$seqs_per_file);
-# }
-$seqs_per_file = ceil($seqs_per_file);
-# print "\n\n HEY, there are $NUMBER_OF_SEQS seqs\n\n This is how many sequences per file: $seqs_per_file\n\n";
-print `perl $script_working_dir/bin/splitFASTA.pl $infile $outdir/component_processes/split_multifasta $infile_root $seqs_per_file >$outdir/component_processes/split_multifasta/stdout`;
+my $seqs_per_file = $NUMBER_OF_SEQS / $ncpus;
+$seqs_per_file = ceil($seqs_per_file);        ## Need to round this up
+
+print `perl $script_working_dir/casc_bin/splitFASTA.pl $infile $outdir/component_processes/split_multifasta $infile_root $seqs_per_file >$outdir/component_processes/split_multifasta/stdout`;
 for(1 .. $ncpus) {
     my $file_name = "$outdir/component_processes/split_multifasta/$infile_root" . "-" . "$_.fsa";
     push (@FILES, $file_name);
@@ -205,9 +213,8 @@ for(1 .. $ncpus) {
 
 ## Run mCRT to Call Putative CRISPR Spacers
 foreach my $file (@FILES) {
-    my $mod_file = $file;
-    $mod_file =~ s/.*\///;
-    my $job = qq|java -jar -Xms128M -Xmx512M $script_working_dir/bin/CRT1.2b.jar $file $outdir/component_processes/mCRT/$mod_file.raw|;
+    my $mod_file = basename($file);
+    my $job = qq|java -jar -Xms128M -Xmx10240M $script_working_dir/casc_bin/CRT1.2b.jar $file $outdir/component_processes/mCRT/$mod_file.raw|;
     push (@THREADS, threads->create('task',"$job"));
 }
 foreach my $thread (@THREADS) {
@@ -218,15 +225,15 @@ foreach my $thread (@THREADS) {
 if (-e "$outdir/component_processes/mCRT/$infile_root.raw") { print `rm $outdir/component_processes/mCRT/$infile_root.raw`;}
 print `cat $outdir/component_processes/mCRT/*.raw > $outdir/component_processes/mCRT/$infile_root.raw`;
 foreach my $file (@FILES) {
-    my $mod_file = $file;
-    $mod_file =~ s/.*\///;
+    my $mod_file = basename($file);
     print `rm $outdir/component_processes/mCRT/$mod_file.raw`;
 }
 print `cat $infile_root-*.repeat.fsa > $outdir/component_processes/mCRT/$infile_root.repeat.fsa`;
 print `cat $infile_root-*.spacer.fsa > $outdir/component_processes/mCRT/$infile_root.spacer.fsa`;
 print `rm $infile_root-*.repeat.fsa`;
 print `rm $infile_root-*.spacer.fsa`;
-my $putative_spacers = `grep -c ">" $outdir/component_processes/mCRT/$infile_root.spacer.fsa`; chomp($putative_spacers);
+
+my $putative_spacers = count_seqs("$outdir/component_processes/mCRT/$infile_root.spacer.fsa");
 if ($putative_spacers == 0) {	progress_bar( $MAX, $MAX, 50, '=' ); if ($silent) { exit 0; } else { die my $death = death(); print $death;}}
 
 ## Create Remaining Output Directories
@@ -240,21 +247,22 @@ open(IN,"<$outdir/component_processes/mCRT/$infile_root.spacer.fsa") || die "\n 
 while(<IN>) {
     chomp;
     my $line = $_;
-    if ($line =~ m/>/) {
+    if ($line =~ m/^>/) {
 	$line =~ s/-spacer-.*//;
-	$line =~ s/>//;
+	$line =~ s/^>//;
 	$SPACER_ID{$line} = 1;
     }
 }
 close(IN);
+
 open(OUT,">$outdir/component_processes/extract_sequence/$infile_root.fasta") || die "\n\n Cannot open the output file for sequence extraction process: $outdir/component_processes/extract_sequence/$infile_root.fasta\n\n";
 open(IN,"<$infile") || die "\n\n Cannot open the original FASTA file $infile\n\n";
 my $print_flag = 0;
 while(<IN>) {
     chomp;
     my $line = $_;
-    if ($line =~ m/>/) {
-	$line =~ s/>//;
+    if ($line =~ m/^>/) {
+	$line =~ s/^>//;
 	$line =~ s/ .*//;
 	if (exists $SPACER_ID{$line}) {
 	    print OUT ">$line\n";
@@ -270,90 +278,22 @@ close(IN);
 close(OUT);
 $PRGS +=7;
 progress_bar( $PRGS, $MAX, 50, '=' );
-## Split up the repeat FASTA file
-@FILES = ();
-@THREADS = ();
-print `rm $outdir/component_processes/split_multifasta/*`;
-my $number_of_sequences = `grep -c ">" $outdir/component_processes/mCRT/$infile_root.repeat.fsa`;
-if ($number_of_sequences < $ncpus) {
-    unless ($silent) {
-	print "\n\n Warning: Too few repeats for ncpus\n ncpus = $ncpus\n seqs  = $number_of_sequences\n ncpus adjusted to $number_of_sequences\n\n";
-    }
-    $ncpus = $number_of_sequences;
-}
-$seqs_per_file = $number_of_sequences / $ncpus; ## Need to round this up . . . 
-unless ($seqs_per_file == int($seqs_per_file)) {
-    $seqs_per_file = int(++$seqs_per_file);
-}
-print `perl $script_working_dir/bin/splitFASTA.pl $outdir/component_processes/mCRT/$infile_root.repeat.fsa $outdir/component_processes/split_multifasta $infile_root-repeat $seqs_per_file >$outdir/component_processes/split_multifasta/stdout`;
-for(1 .. $ncpus) {
-    my $file_name = "$outdir/component_processes/split_multifasta/$infile_root-repeat" . "-" . "$_.fsa";
-    push (@FILES, $file_name);
-}
-## ------------ ##
 
-## Perform a BLASTn of the repeats of putative spacers
-foreach my $file (@FILES) {
-    if ( -e $file ) {
-	my $sub_root = $file;
-	$sub_root =~ s/.*\///;
-	my $blastn_string = "blastn -query $file ";
-	$blastn_string .= "-db $script_working_dir/BlastDBs/$RepeatDB ";
-	$blastn_string .= "-out $outdir/component_processes/blastn/$sub_root.btab ";
-	$blastn_string .= "-evalue 1e-5 ";
-	$blastn_string .= "-word_size 4 ";
-	$blastn_string .= "-outfmt 6";
-	push (@THREADS, threads->create('task',"$blastn_string"));
-    }
-}
-foreach my $thread (@THREADS) {
-    $thread->join();
-    $PRGS += 10/$ncpus;
-    progress_bar( $PRGS, $MAX, 50, '=' );
-}
-print `cat $outdir/component_processes/blastn/*.fsa.* > $outdir/component_processes/blastn/$infile_root.btab`;
+## Repeat BLASTn search.
+my $blastn_string = "perl $script_working_dir/casc_bin/para_blastn.pl " . 
+    "-q $outdir/component_processes/mCRT/$infile_root.repeat.fsa " . 
+    "-d $script_working_dir/casc_blast_dbs/$RepeatDB " . 
+    "-o $outdir/component_processes/blastn/$infile_root.btab " . 
+    " -e 1e-5 -t $ncpus > $outdir/component_processes/blastn/para_blastn.log 2>&1";
+print `$blastn_string`;
 
-## Split up the extracted FASTA file
-@FILES = ();
-@THREADS = ();
-print `rm $outdir/component_processes/split_multifasta/*`;
-$number_of_sequences = `grep -c ">" $outdir/component_processes/extract_sequence/$infile_root.fasta`;
-if ($number_of_sequences < $ncpus) {
-   unless ($silent) {
-       print "\n\n Warning: Too few Cas sequences for ncpus\n ncpus = $ncpus\n seqs  = $number_of_sequences\n ncpus adjusted to $number_of_sequences\n\n";
-   }    
-   $ncpus = $number_of_sequences;
-}
-$seqs_per_file = $number_of_sequences / $ncpus; ## Need to round this up . . . 
-unless ($seqs_per_file == int($seqs_per_file)) {
-    $seqs_per_file = int(++$seqs_per_file);
-}
-print `perl $script_working_dir/bin/splitFASTA.pl $outdir/component_processes/extract_sequence/$infile_root.fasta $outdir/component_processes/split_multifasta $infile_root-extract $seqs_per_file >$outdir/component_processes/split_multifasta/stdout`;
-for(1 .. $ncpus) {
-    my $file_name = "$outdir/component_processes/split_multifasta/$infile_root-extract" . "-" . "$_.fsa";
-    push (@FILES, $file_name);
-}
-## ------------ ##
-
-## Perform a BLASTx of original sequences with putative spacers to find Cas proteins upstream
-foreach my $file (@FILES) {
-    if ( -e $file ) {
-	my $sub_root = $file;
-	$sub_root =~ s/.*\///;
-	my $blastx_string = "blastx -query $file ";
-	$blastx_string .= "-db $script_working_dir/BlastDBs/$UniRefDB ";
-	$blastx_string .= "-out $outdir/component_processes/blastx/$sub_root.btab ";
-	$blastx_string .= "-evalue 1e-12 ";
-	$blastx_string .= "-outfmt 6";
-	push (@THREADS, threads->create('task',"$blastx_string"))
-    }
-}
-foreach my $thread (@THREADS) {
-    $thread->join();
-    $PRGS += 25/$ncpus;
-    progress_bar( $PRGS, $MAX, 50, '=' );
-}
-print `cat $outdir/component_processes/blastx/*.fsa.* > $outdir/component_processes/blastx/$infile_root.btab`;
+## Cas BLASTx search.
+my $blastx_string = "perl $script_working_dir/casc_bin/para_blastx.pl " .
+    "-q $outdir/component_processes/extract_sequence/$infile_root.fasta " .
+    "-d $script_working_dir/casc_blast_dbs/$UniRefDB " .
+    "-o $outdir/component_processes/blastx/$infile_root.btab " .
+    " -e 1e-12 -t $ncpus > $outdir/component_processes/blastx/para_blastx.log 2>&1";
+print `$blastx_string`;
 
 ## Create list of bonafide spacer arrays from the repeat BLAST and Cas BLAST
 open(OUT,">$outdir/component_processes/bonafide_lookup/$infile_root.repeat.lookup");
@@ -388,7 +328,7 @@ close(OUT);
 progress_bar( 95, $MAX, 50, '=' );
 
 ## Run the report generator
-my $report_string = "perl $script_working_dir/bin/spacer_report_gen.pl ";
+my $report_string = "perl $script_working_dir/casc_bin/spacer_report_gen.pl ";
 $report_string .= "-f $infile ";
 $report_string .= "-r $outdir/component_processes/bonafide_lookup/$infile_root.repeat.lookup ";
 $report_string .= "-c $outdir/component_processes/bonafide_lookup/$infile_root.cas.lookup ";
@@ -416,6 +356,20 @@ else {
 ##################################################
 ##                SUBROUTINES                   ##
 ##################################################
+sub count_seqs
+{
+    my $s = $_[0];
+    my $seqs = 0;
+    open(IN,"<$s") || die "\n Cannot open the temporary file: $s\n\n";
+    while(<IN>) {
+	chomp;
+	if ($_ =~ m/^>/) {
+	    $seqs++;
+	}
+    }
+    close(IN);
+    return($seqs);
+}
 sub dateTime
 {
     my $date = "";

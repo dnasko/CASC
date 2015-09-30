@@ -42,13 +42,13 @@ Once you have downloaded the repository you should see two files and four direct
 
   * `README.md` the readme that you're reading now
 
-  * `/BlastDBs` contains two BLAST databases which are used to validate CRISPR calls
+  * `./casc_blast_dbs` contains two BLAST databases which are used to validate CRISPR calls
   
-  * `/bin` contains two programs: a report generator (written in Perl) and a modified version of CRT (written in Java)
+  * `./casc_bin` contains two programs: a report generator (written in Perl) and a modified version of CRT (written in Java)
 
-  * `/example` contains three example FASTA files to test CASC with
+  * `./examples` contains three example FASTA files to test CASC with
 
-  * `/images` contains the CASC logo
+  * `./images` contains the CASC logo
 
 ### CASC HAS ONLY ONE DEPENDENCY, and it's BLAST. You will need to have a local copy of BLAST installed on your machine, and have its location in your PATH. ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 
@@ -81,7 +81,8 @@ to a new folder on our home directory, using 4 CPUs, and calling CRISPRs conserv
 CASC is routinely updated in an effort to assure that you are validating CRISPRs
 with the most up-to-date versions of UniRef and CRISPR DB:
 
-     Version 2.4 (07Oct2014) == [Repeat DB 07Oct2014, now includes predicted DR's] [UniRef 07Oct2014] added -silent argument
+     Version 2.5 (29Sep2015) == [UniRef 29Sep2015] added, unable to update repeat DB, various bug fixes
+     Version 2.4 (07Oct2014) -- [Repeat DB 07Oct2014, now includes predicted DR's] [UniRef 07Oct2014] added -silent argument
      Version 2.3 (17Feb2014) -- [CRISPR DB 17Feb2014] [UniRef 17Feb2014] added -v argument
      Version 2.2 (02Jun2013) -- Improved report formatting and added array coordinates to each array
      Version 2.1 (09Apr2013) -- Various bug fixs, improved report format
@@ -108,5 +109,12 @@ these citations are included below:
   * S.F. Altschul, W. Gish, W. Miller, E.W. Myers, D.J. Lipman, Basic local alignment search tool, J. Mol. Biol. 215 (1990) 403–410.
   
   * Suzek,B.E., Huang,H., McGarvey,P., Mazumder,R. and Wu,C.H. (2007) UniRef: comprehensive and non-Redundant UniProt reference clusters. Bioinformatics, 23, 1282Ð1288.
+
+[6] TODO
+--------
+
+  * Provide a "bona fide" repeat FASTA file and a "non-bona fide" repeat FASTA file
+  * Add an arg. so that the "Report" file is more machine readable, and less human formatted
+
 
 Enjoy!
