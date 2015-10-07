@@ -186,7 +186,7 @@ while(<IN>) {
     else {
 	my $seq_string = $_;
 	my $valid_bases = $seq_string =~ tr/ACGTURYKMSWBDHVNXacgturykmswbdhvnx/ACGTURYKMSWBDHVNXacgturykmswbdhvnx/;
-	if ($valid_bases != length($_)) { die "\n\n ERROR: It appears your FASTA file contains non-nucleotide charecters\n $_\n\n";}
+	if ($valid_bases != length($_)) { die "\n\n ERROR: It appears your FASTA file contains non-nucleotide charecters\n $_\n\n Offending sequence:\n$_\n\n\n";}
 	$NUMBER_OF_BASES += length($_);
     }
 }
