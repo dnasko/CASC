@@ -10,13 +10,17 @@ CASC -- CASC Ain't Simply CRT
 
 =head1 SYNOPSIS
 
- CASC --in /path/to/file.fasta --outdir /path/to/output/directory/ --ncpus 1 --conservative
+ CASC --in /path/to/file.fasta --outdir /path/to/output/directory/ --ncpus 1 [--conservative]
                      [--help] [--manual]
 
 =head1 DESCRIPTION
 
-Program to help call CRISPR spacers from FASTA files containing metagenomic
-or genomic reads or contigs.
+CASC is a program that detects and validates CRISPR repeat-spacer arrays from
+metagenomic / genomic sequences (long reads or contigs).
+
+CASC will find CRISPR repeat-spacer arrays by using the CRT, and then validate
+the putative repeat-spacer array using a few heuristics. Further details
+are available in the (nearly complete) manuscript.
  
 =head1 OPTIONS
 
@@ -77,7 +81,7 @@ Report bugs to dnasko@udel.edu
 
 =head1 COPYRIGHT
 
-Copyright 2015 Daniel Nasko.  
+Copyright 2016 Daniel Nasko.  
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.  
 This is free software: you are free to change and redistribute it.  
 There is NO WARRANTY, to the extent permitted by law.  
