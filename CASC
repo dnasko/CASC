@@ -441,7 +441,3 @@ sub complete
 
     $successful_complete .= " $outdir\n\n";
 }
-
-
-
-
