@@ -81,7 +81,8 @@ to a new folder on our home directory, using 4 CPUs, and calling CRISPRs conserv
 CASC is routinely updated in an effort to assure that you are validating CRISPRs
 with the most up-to-date versions of UniRef and CRISPR DB:
 
-     Version 2.5 (29Sep2015) == [UniRef 29Sep2015] added, unable to update repeat DB, various bug fixes
+	 Beginning work on verion 2.6 (09Feb2018)
+	 Version 2.5 (29Sep2015) == [UniRef 29Sep2015] added, unable to update repeat DB, various bug fixes
      Version 2.4 (07Oct2014) -- [Repeat DB 07Oct2014, now includes predicted DR's] [UniRef 07Oct2014] added -silent argument
      Version 2.3 (17Feb2014) -- [CRISPR DB 17Feb2014] [UniRef 17Feb2014] added -v argument
      Version 2.2 (02Jun2013) -- Improved report formatting and added array coordinates to each array
