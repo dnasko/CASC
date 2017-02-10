@@ -1,0 +1,134 @@
+#!/usr/bin/perl -w
+
+# MANUAL FOR casc
+
+=pod
+
+=head1 NAME
+
+casc -- casc aint simply crt, crispr finding program
+
+=head1 SYNOPSIS
+
+ casc --in /Path/to/infile.fasta --outdir /Path/to/output_dir/ --ncpus 1 [--conservative]
+                     [--version] [--help] [--manual]
+
+=head1 DESCRIPTION
+
+ CASC is a program that detects and validates CRISPR repeat-spacer arrays from
+ metagenomic / genomic sequences (long reads or contigs).                                                                                                                                                       
+ CASC will find CRISPR repeat-spacer arrays by using the CRT, and then validate
+ the putative repeat-spacer array using a few heuristics. Further details
+ are available in the (nearly complete) manuscript.
+ 
+=head1 OPTIONS
+
+=over 3
+
+=item B<-i, --in>=FILENAME
+
+Input file in FASTA format. (Required) 
+
+=item B<-o, --outdir>=DIR
+
+Output directory containing your results. (Required) 
+
+=item B<-n, --ncpus>=INT
+
+Number of CPUs to use. Default = 1 (Optional)
+
+=item B<-c, --conservative>
+
+Be conservative with spacer calls. (Optional)
+By default CASC is liberal with calls.
+
+=item B<-v, --version>
+
+Displays the version. (Optional)
+
+=item B<-h, --help>
+
+Displays the usage message.  (Optional) 
+
+=item B<-m, --manual>
+
+Displays full manual.  (Optional) 
+
+=back
+
+=head1 DEPENDENCIES
+
+Requires the following Perl libraries:
+
+CASC::Reporting
+CASC::Utilities
+threads
+
+=head1 AUTHOR
+
+Written by Daniel Nasko, 
+Center for Bioinformatics and Computational Biology, University of Delaware.
+
+=head1 REPORTING BUGS
+
+Report bugs to dnasko@udel.edu
+
+=head1 COPYRIGHT
+
+Copyright 2017 Daniel Nasko.  
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.  
+This is free software: you are free to change and redistribute it.  
+There is NO WARRANTY, to the extent permitted by law.  
+
+Please acknowledge author and affiliation in published work arising from this script's 
+usage <http://bioinformatics.udel.edu/Core/Acknowledge>.
+
+=cut
+
+
+use strict;
+use Getopt::Long;
+use File::Basename;
+use Pod::Usage;
+
+use threads;
+use CASC::Reporting qw(:Both);
+use CASC::Utilities qw(:Both);
+use CASC::System qw(:Both);
+my $version = 2.6;
+
+#ARGUMENTS WITH NO DEFAULT
+my($infile,$outdir,$conservative,$ver_request,$help,$manual);
+##ARGUMENTS WITH DEFAULT
+my $ncpus=1;
+
+GetOptions (	
+				"i|in=s"	 =>	\$infile,
+                                "o|outdir=s"	 =>	\$outdir,
+                                "n|ncpus=i"      =>     \$ncpus,
+                                "c|conservative" =>     \$conservative,
+                                "v|version"      =>     \$ver_request,
+				"h|help"	 =>	\$help,
+				"m|manual"	 =>	\$manual);
+
+# VALIDATE ARGS
+if ($ver_request) { version_info($version); }
+pod2usage(-verbose => 2)  if ($manual);
+pod2usage( {-exitval => 0, -verbose => 2, -output => \*STDERR} )  if ($help);
+pod2usage( -msg  => "\n\n ERROR!  Required argument --in not found.\n\n", -exitval => 2, -verbose => 1)  if (! $infile );
+pod2usage( -msg  => "\n\n ERROR!  Required argument --outdir not found.\n\n", -exitval => 2, -verbose => 1)  if (! $outdir);
+
+## Global Variables
+my $UniRefDB = "UniRef_Cas_29Sep2015";          ## UniRef DB Version
+my $RepeatDB = "RepeatDB_07Oct2014";            ## CRISPR DB Version
+
+## Check that BLASTn/x are installed and in PATH
+blast_check();
+
+## Check that CASC scripts are installed and in PATH
+my @casc_scripts = ('CRT', 'para_blastn.pl', 'para_blastx.pl', 'spacer_report_gen.pl', 'splitFASTA.pl');
+foreach my $script (@casc_scripts) { script_check($script); }
+
+
+
+exit 0;
