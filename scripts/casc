@@ -11,7 +11,7 @@ casc -- casc aint simply crt, crispr finding program
 =head1 SYNOPSIS
 
  casc --in /Path/to/infile.fasta --outdir /Path/to/output_dir/ --ncpus 1 [--conservative]
-                     [--version] [--help] [--manual]
+                     [--version] [--debug] [--help] [--manual]
 
 =head1 DESCRIPTION
 
@@ -46,6 +46,11 @@ By default CASC is liberal with calls.
 
 Displays the version. (Optional)
 
+=item B<-d, --debug>
+
+Run in debug mode and do not remove the component_process files. (Optional)
+Note, if component process files are not removed they will eat up disk space.
+
 =item B<-h, --help>
 
 Displays the usage message.  (Optional) 
@@ -62,6 +67,8 @@ Requires the following Perl libraries:
 
 CASC::Reporting
 CASC::Utilities
+CASC::System
+CASC::QC
 threads
 
 =head1 AUTHOR
@@ -95,18 +102,21 @@ use threads;
 use CASC::Reporting qw(:Both);
 use CASC::Utilities qw(:Both);
 use CASC::System qw(:Both);
+use CASC::QC qw(:Both);
 my $version = 2.6;
 
 #ARGUMENTS WITH NO DEFAULT
-my($infile,$outdir,$conservative,$ver_request,$help,$manual);
+my($infile,$outdir,$conservative,$ver_request,$debug,$help,$manual);
 ##ARGUMENTS WITH DEFAULT
 my $ncpus=1;
+my $calling = "liberal";
 
 GetOptions (	
 				"i|in=s"	 =>	\$infile,
                                 "o|outdir=s"	 =>	\$outdir,
                                 "n|ncpus=i"      =>     \$ncpus,
                                 "c|conservative" =>     \$conservative,
+                                "d|debug"        =>     \$debug,
                                 "v|version"      =>     \$ver_request,
 				"h|help"	 =>	\$help,
 				"m|manual"	 =>	\$manual);
@@ -117,10 +127,11 @@ pod2usage(-verbose => 2)  if ($manual);
 pod2usage( {-exitval => 0, -verbose => 2, -output => \*STDERR} )  if ($help);
 pod2usage( -msg  => "\n\n ERROR!  Required argument --in not found.\n\n", -exitval => 2, -verbose => 1)  if (! $infile );
 pod2usage( -msg  => "\n\n ERROR!  Required argument --outdir not found.\n\n", -exitval => 2, -verbose => 1)  if (! $outdir);
+if ($conservative) { $calling = "conservative"; }
 
 ## Global Variables
-my $UniRefDB = "UniRef_Cas_29Sep2015";          ## UniRef DB Version
-my $RepeatDB = "RepeatDB_07Oct2014";            ## CRISPR DB Version
+my $UniRefDB = "UniRef_Cas_29Sep2015";    ## UniRef DB Version
+my $RepeatDB = "RepeatDB_07Oct2014";      ## CRISPR DB Version
 
 ## Check that BLASTn/x are installed and in PATH
 blast_check();
@@ -129,6 +140,35 @@ blast_check();
 my @casc_scripts = ('CRT', 'para_blastn.pl', 'para_blastx.pl', 'spacer_report_gen.pl', 'splitFASTA.pl');
 foreach my $script (@casc_scripts) { script_check($script); }
 
+## Check that the input FASTA is a Nucleotide FASTA
+check_fasta($infile);
+my ($number_of_seqs, $number_of_bases) = count_seqs($infile);
+$ncpus = check_threads($number_of_seqs, $ncpus);
 
+## Setup the output working area
+initialize_outdir_tree($outdir);
+report('start',$outdir);
+
+## Split the FASTA up
+report('split_fasta',$outdir);
+my @Files = split_multifasta($number_of_seqs, $ncpus, $infile, "$outdir/component_processes/split_multifasta");
+report('done', $outdir);
+
+## Run mCRT to call putative spacers
+report('mCRT', $outdir);
+my $putative_spacers = run_mCRT(\@Files, $outdir, get_basename($infile));
+report('done', $outdir);
+if ($putative_spacers == 0) {
+    unless($debug) { clean_up($outdir);}
+    report('no_spacers', $outdir);
+}
+
+## Extract the sequences contianing putative spacers
+my %SpacerContainingSeqs = extract_headers("$outdir/component_processes/mCRT/" . get_basename($infile) . ".spacer.fsa");
+extract_seqs($infile,"$outdir/component_processes/extract_sequence/spacer_containing_seqs.fasta",%SpacerContainingSeqs);
+
+## All Done Everything
+report('all_done', $outdir);
+unless($debug) { clean_up($outdir);}
 
 exit 0;

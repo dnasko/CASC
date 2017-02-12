@@ -58,7 +58,7 @@ if ($j == 0)
 	$j = $count;
 }
 
-print "File spliting completed.  $fileNumber files created.  Final file contains $j sequences.\n";
+# print "File spliting completed.  $fileNumber files created.  Final file contains $j sequences.\n";
 exit 0;
 
 sub promptUser 

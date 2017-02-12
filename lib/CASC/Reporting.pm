@@ -2,26 +2,62 @@ package CASC::Reporting;
 
 use strict;
 use Exporter;
+use Cwd 'abs_path';
+use CASC::Utilities qw(:Both);
+use CASC::System qw(:Both);
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 $VERSION     = 1.00;
 @ISA         = qw(Exporter);
 @EXPORT      = ();
-@EXPORT_OK   = qw(progress_bar death no_bonafide complete);
-%EXPORT_TAGS = ( DEFAULT => [qw(&progress_bar)],
-                 Both    => [qw(&progress_bar &death &no_bonafide &complete)]);
+@EXPORT_OK   = qw(report death no_bonafide complete);
+%EXPORT_TAGS = ( DEFAULT => [qw(&report)],
+                 Both    => [qw(&report &death &no_bonafide &complete)]);
 
-sub progress_bar
+sub report
 {
-    my ( $got, $total, $width, $char, $silent ) = @_;
-    $width ||= 25;
-    $char  ||= '=';
-    my $num_width = length $total;
-    local $| = 1;
-    unless ($silent) {
-	printf "|%-${width}s| (%.2f%%)\r", 
-              $char x (($width-1)*$got/$total). '>', $got, $total, 100*$got/
-	      +$total;
+    my $status = $_[0];
+    my $outdir = $_[1];
+    if ($status eq "start") {
+	open(REP, "|-", "tee $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
+	my $commandline = $0 . " ". (join " ", @ARGV);
+	my $abs_path = abs_path($outdir);
+	print REP "Commandline: $commandline\n\n";
+	print REP "Output Directory: $abs_path\n\n";
+	print REP "===== CASC Started. Log can be found here: " . $abs_path . "/casc.log\n\n";
+	close(REP);
+    }
+    elsif ($status eq "split_fasta") {
+	open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
+	print REP "== Spliting the FASTA file ................. ";
+	close(REP);
+    }
+    elsif ($status eq "mCRT") {
+	open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
+        print REP "== Running mCRT to find putative spacers ... ";
+        close(REP);
+    }
+    elsif ($status eq "done") {
+	my $date = dateTime();
+	open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
+	print REP "Done [$date]\n";
+        close(REP);
+    }
+    elsif ($status eq "no_spacers") {
+	my $date = dateTime();
+        my $abs_path = abs_path($outdir);
+	open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
+        print REP "\n===== CASC Finished!\n\n CASC log can be found here: " . $abs_path . "/casc.log\n\n";
+	print REP "\n!==> No putative spacers were found in your input file. Nothing else to do, bailing out. <==!\n\n";
+        close(REP);
+	exit 0;
+    }
+    elsif ($status eq "all_done") {
+	my $date = dateTime();
+        my $abs_path = abs_path($outdir);
+	open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
+	print REP "\n===== CASC Finished!\n\nCASC log can be found here: " . $abs_path . "/casc.log\n\n";
+        close(REP);
     }
 }
 
