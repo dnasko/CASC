@@ -78,20 +78,22 @@ to execute the following command to display CASC's help / usage:
 3. Using CASC to Find CRISPRs
 ------------------------------
 
-Say you have a recently sequenced genome, or well assembled metagenomic reads
+Say you have a recently sequenced genome, or an assembled metagenome
 saved in a file `TestSeqs.nuc.fasta` and you would like to find CRISPR spacers
 within this genome or library. You would execute the following:
 
-    ./CASC --in=example/a_few_crisprs.fasta
+```bash
+casc -i TestSeqs.nuc.fasta -o outdir
+```
+CASC does come with two optional arguments, allowing you to choose how many CPUs
+you would like to use, and whether or not you would like to be conservative or
+liberal with CRISPR call. By default you will only use 1 CPU, and call CRISPRs liberally.
+In this example we are saving to a new folder on our home directory, using 4 CPUs, and calling
+CRISPRs conservatively:
 
-CASC does come with three optional arguments, allowing you to explicitly specify
-where the output files will be saved, as well as how many CPUs you would like
-to use, and whether or not you would like to be conservative or liberal with CRISPR
-call. By default outputs are saved in your current working directory, you
-will only use 1 CPU, and call CRISPRs liberally. In this example we are saving
-to a new folder on our home directory, using 4 CPUs, and calling CRISPRs conservatively:
-
-    ./CASC --in=/Path/to/TestSeqs.nuc.fasta --outdir=/home/dnasko/NewOutput/ --ncpus=4 --conservative
+```bash
+casc -i /Path/to/TestSeqs.nuc.fasta -o NewOutput -n 4 --conservative
+```
 
 4. Version History
 -------------------
@@ -123,12 +125,9 @@ CRISPR Finder Repeat Database. Lastly a final BLASTX is performed against all
 UniRef100P clusters which represent CRISPR-associated proteins (Cas). All of
 these citations are included below:
 
-  * Bland C, Ramsey TL, Sabree F, Lowe M, Brown K, Kyrpides NC, Hugenholtz P: CRISPR Recognition Tool (CRT): a tool for automatic detection of clustered regularly interspaced palindromic repeats. BMC Bioinformatics. 2007 Jun 18;8(1):209.
-
-  * The CRISPRdb database and tools to display CRISPRs and to generate dictionaries of spacers and repeats. BMC Bioinformatics. 2007 May 23;8(1):172.
-  
-  * S.F. Altschul, W. Gish, W. Miller, E.W. Myers, D.J. Lipman, Basic local alignment search tool, J. Mol. Biol. 215 (1990) 403–410.
-  
-  * Suzek,B.E., Huang,H., McGarvey,P., Mazumder,R. and Wu,C.H. (2007) UniRef: comprehensive and non-Redundant UniProt reference clusters. Bioinformatics, 23, 1282Ð1288.
+ - Bland C, Ramsey TL, Sabree F, Lowe M, Brown K, Kyrpides NC, Hugenholtz P: CRISPR Recognition Tool (CRT): a tool for automatic detection of clustered regularly interspaced palindromic repeats. BMC Bioinformatics. 2007 Jun 18;8(1):209.
+ - The CRISPRdb database and tools to display CRISPRs and to generate dictionaries of spacers and repeats. BMC Bioinformatics. 2007 May 23;8(1):172.
+ - S.F. Altschul, W. Gish, W. Miller, E.W. Myers, D.J. Lipman, Basic local alignment search tool, J. Mol. Biol. 215 (1990) 403–410.
+ - Suzek,B.E., Huang,H., McGarvey,P., Mazumder,R. and Wu,C.H. (2007) UniRef: comprehensive and non-Redundant UniProt reference clusters. Bioinformatics, 23, 1282Ð1288.
 
 Enjoy!
