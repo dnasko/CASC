@@ -33,19 +33,40 @@ And CASC will be cloned to your working directory.
 2. Installing CASC and its Dependencies
 ----------------------------------------
 
-Once you have downloaded the repository you should see two files and four directories:
+##### Installing CASC system-wide
 
-  * `CASC` the executable Perl script.
+If you have sudo acces you can install CASC easily:
 
-  * `README.md` the readme that you're reading now
+```bash
+perl Makefile.PL
+make
+make test
+sudo make install
+```
 
-  * `./casc_blast_dbs` contains two BLAST databases which are used to validate CRISPR calls
-  
-  * `./casc_bin` contains two programs: a report generator (written in Perl) and a modified version of CRT (written in Java)
+##### Installing CASC locally
 
-  * `./examples` contains three example FASTA files to test CASC with
+If you would like to install CASC without sudo:
 
-  * `./images` contains the CASC logo
+```bash
+perl Makefile.PL PREFIX=/Path/to/where/to/install
+make
+make test
+make install
+```
+
+By installing this way you will need to update your
+PATH and @INC. This is done by adding the following to your
+~/.profile or ~/.bash_profile:
+
+```bash
+PATH=$PATH:/Path/to/where/to/install/bin
+export PATH
+export PERL5LIB=/Path/to/where/to/install/lib/perl5/site_perl
+```
+Of course, you need to replace "/Path/to/where/to/install" with
+where you actually installed it ;)
+
 
 ### CASC HAS ONLY ONE DEPENDENCY, and it's BLAST. You will need to have a local copy of BLAST installed on your machine, and have its location in your PATH. ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 
