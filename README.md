@@ -5,35 +5,32 @@ tool designed for CRISPR discovery in metagenomic or genomic reads or contigs.
 
 CASC, short for "CASC Ain't Simply CRT", is a tool which utilizes
 a modified version of the CRISPR Recognition Tool (CRT) to call putative
-CRISPR spacers. CASC then goes on to leverage two BLAST databases
-to help validate these spacers in an effort to reduce the high
-false-positive rate.
+CRISPR spacers. CASC then validates these spacers by searching against
+a database of Cas proteins and CRISPR repeats to get rid of false-positives.
 
 If your input FASTA file contains at least one CRISPR spacer, CASC will
-output three files:
+output seven files:
 
-  * A FASTA file containing 'bona fide' or 'valid' CRISPR Spacers
-  
-  * A FASTA file containing 'non-bona fide' or 'non-valid' CRISPR Spacers (i.e. those appearing to be false-positive from CRT)
-  
-  * A summary report
+  - **casc.log**: A log with info about your last casc run
+  - **file.bonafide.spacers.fasta**: FASTA file containing 'bona fide' or 'valid' CRISPR spacers
+  - **file.non-bonafide.spacers.fasta**: FASTA file containing 'non-bona fide' or 'non-valid' CRISPR spacers (i.e. those appearing to be false-positive from CRT)
+  - **file.bonafide.repeats.fasta**: FASTA file containing 'bona fide' or 'valid' CRISPR repeats
+  - **file.non-bonafide.repeats.fasta**: FASTA file containing 'non-bona fide' or 'non-valid' CRISPR repeats
+  - **file.report.md**: Markdown file with some summary statistics on your run
+  - **file.results.txt**: Tab-delimmited breakdown of results
 
-This document contains the information needed to download, install,
-and start using CASC.
-
-[1] Downloading CASC
+1. Downloading CASC
 --------------------
 
 ### NOTE: CASC was written on Mac OS, and therefore will only work on UNIX-based operating systems (e.g. Mac OS, Linux).
 
-To download, simply clone the CASC repository from GitHub. From the commandline
-simply type:
+To download, simply clone the CASC repository from GitHub. From the commandline type:
 
 `$ git clone git@github.com:dnasko/CASC.git`
 
 And CASC will be cloned to your working directory.
 
-[2] Installing CASC and its Dependencies
+2. Installing CASC and its Dependencies
 ----------------------------------------
 
 Once you have downloaded the repository you should see two files and four directories:
@@ -57,7 +54,7 @@ to execute the following command to display CASC's help / usage:
 
     ./CASC --help
 
-[3] Using CASC to Find CRISPRs
+3. Using CASC to Find CRISPRs
 ------------------------------
 
 Say you have a recently sequenced genome, or well assembled metagenomic reads
@@ -75,13 +72,13 @@ to a new folder on our home directory, using 4 CPUs, and calling CRISPRs conserv
 
     ./CASC --in=/Path/to/TestSeqs.nuc.fasta --outdir=/home/dnasko/NewOutput/ --ncpus=4 --conservative
 
-[4] Version History
+4. Version History
 -------------------
 
 CASC is routinely updated in an effort to assure that you are validating CRISPRs
 with the most up-to-date versions of UniRef and CRISPR DB:
 
-	 Beginning work on verion 2.6 (09Feb2018)
+	 Beginning work on verion 2.6 (09Feb2017)
 	 Version 2.5 (29Sep2015) == [UniRef 29Sep2015] added, unable to update repeat DB, various bug fixes
      Version 2.4 (07Oct2014) -- [Repeat DB 07Oct2014, now includes predicted DR's] [UniRef 07Oct2014] added -silent argument
      Version 2.3 (17Feb2014) -- [CRISPR DB 17Feb2014] [UniRef 17Feb2014] added -v argument
@@ -92,7 +89,7 @@ with the most up-to-date versions of UniRef and CRISPR DB:
      Version 1.1 (16Mar2013) -- [CRISPR DB 29Jan2013] [UniRef 16 Mar 2013]
      Version 1.0 (19Dec2012) -- Initial Version
 
-[5] Citations
+5. Credits
 -------------
 
 CASC would not be possible without the help of others who have written some
@@ -110,12 +107,5 @@ these citations are included below:
   * S.F. Altschul, W. Gish, W. Miller, E.W. Myers, D.J. Lipman, Basic local alignment search tool, J. Mol. Biol. 215 (1990) 403–410.
   
   * Suzek,B.E., Huang,H., McGarvey,P., Mazumder,R. and Wu,C.H. (2007) UniRef: comprehensive and non-Redundant UniProt reference clusters. Bioinformatics, 23, 1282Ð1288.
-
-[6] TODO
---------
-
-  * Provide a "bona fide" repeat FASTA file and a "non-bona fide" repeat FASTA file
-  * Add an arg. so that the "Report" file is more machine readable, and less human formatted
-
 
 Enjoy!

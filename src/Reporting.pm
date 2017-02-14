@@ -32,32 +32,32 @@ sub report
     }
     elsif ($status eq "split_fasta") {
 	open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
-	print REP "== Spliting the FASTA file ...................... ";
+	print REP "== Spliting the FASTA file ............................ ";
 	close(REP);
     }
     elsif ($status eq "mCRT") {
 	open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
-        print REP "== Running mCRT to find putative spacers ........ ";
+        print REP "== Running mCRT to find putative spacers .............. ";
         close(REP);
     }
     elsif ($status eq "extraction") {
 	open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
-        print REP "== Extracting sequences with putative spacers ... ";
+        print REP "== Extracting sequences with putative spacers ......... ";
         close(REP);
     }
     elsif ($status eq "blastn") {
         open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
-        print REP "== Comparing putative repeats against the repeat database ... ";
+        print REP "== Comparing putative repeats against the repeat DB ... ";
         close(REP);
     }
     elsif ($status eq "blastx") {
         open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
-        print REP "== Searching for Cas proteins ... ";
+        print REP "== Searching for Cas proteins ......................... ";
         close(REP);
     }
     elsif ($status eq "reporting") {
         open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
-        print REP "== Gathering and printing results ... ";
+        print REP "== Gathering and printing results ..................... ";
         close(REP);
     }
     elsif ($status eq "done") {

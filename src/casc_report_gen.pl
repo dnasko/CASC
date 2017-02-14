@@ -127,6 +127,7 @@ pod2usage( -msg  => "\n\n ERROR!  Required argument --stats not found.\n\n", -ex
 
 my %Blastx;
 my %Blastn;
+my %Blastn2;
 my %Bonafide;
 my $nstats = 0;
 
@@ -143,6 +144,7 @@ while(<IN>) {
     chomp;
     my ($r,$a) = parse_header($_);
     $Blastn{$r}{$a} = 1;
+    $Blastn2{$r}{$a} = 1;
 }
 close(IN);
 
@@ -236,15 +238,6 @@ close(BON);
 close(NBON);
 
 
-# print "BLASTX!\n";
-# foreach my $i (keys %Blastx) {
-#     print $i . "\t" . $Blastx{$i} . "\n";
-# }
-# print "BLASTN!\n";
-# foreach my $i (keys %Blastn) {
-#     print $i . "\t" . $Blastn{$i} . "\n";
-# }
-
 ## Printing the markdown report
 my $mode = "Liberal";
 if ($conservative) {$mode = "Conservative"; }
@@ -252,7 +245,7 @@ my @Stats = split(/,/, $stats);
 my $mean_read = Round($Stats[0] / $Stats[1], 0);
 my $nbonafide = keys %Bonafide;
 my $ncas = keys %Blastx;
-my $nrepeat = 0; foreach my $i (keys %Blastn) {$nrepeat++; }
+my $nrepeat = keys %Blastn2;
 my $narrays = keys %ArrayPositions;
 my $percent = Round(($nbonafide / $narrays)*100, 0);
 $percent = $percent . "%";
