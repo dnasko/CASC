@@ -99,16 +99,18 @@ to a new folder on our home directory, using 4 CPUs, and calling CRISPRs conserv
 CASC is routinely updated in an effort to assure that you are validating CRISPRs
 with the most up-to-date versions of UniRef and CRISPR DB:
 
-	 Beginning work on verion 2.6 (09Feb2017)
-	 Version 2.5 (29Sep2015) == [UniRef 29Sep2015] added, unable to update repeat DB, various bug fixes
-     Version 2.4 (07Oct2014) -- [Repeat DB 07Oct2014, now includes predicted DR's] [UniRef 07Oct2014] added -silent argument
-     Version 2.3 (17Feb2014) -- [CRISPR DB 17Feb2014] [UniRef 17Feb2014] added -v argument
-     Version 2.2 (02Jun2013) -- Improved report formatting and added array coordinates to each array
-     Version 2.1 (09Apr2013) -- Various bug fixs, improved report format
-     Version 2.0 (22Mar2013) -- Improved multithreading function
-     Version 1.2 (17Mar2013) -- Linux compatibility improved, conservative option added
-     Version 1.1 (16Mar2013) -- [CRISPR DB 29Jan2013] [UniRef 16 Mar 2013]
-     Version 1.0 (19Dec2012) -- Initial Version
+| Version | Date      | Notes                                                                                   |
+|:-------:|:---------:|:----------------------------------------------------------------------------------------|
+| 2.6     | 14Feb2017 | Now uses Make::Maker for installation; Various improvements to results reporting        |
+| 2.5     | 29Sep2015 | UniRef DB updated to 29Sep2015; various bug fixes                                       |
+| 2.4     | 07Oct2014 | CRISPR DB updated to  07Oct2014; UniRef DB updated to 07Oct2014; added -silent argument |
+| 2.3     | 17Feb2014 | CRISPR DB updated to  17Feb2014; UniRef DB updated to 17Feb2014; added -v argument      |
+| 2.2     | 02Jun2013 | Improved report formatting and added array coordinates to each array                    |
+| 2.1     | 09Apr2013 | Various bug fixs, improved report format                                                |
+| 2.0     | 22Mar2013 | Improved multithreading function                                                        |
+| 1.2     | 17Mar2013 | Linux compatibility improved, conservative option added                                 |
+| 1.1     | 16Mar2013 | CRISPR DB updated to  29Jan2013; UniRef DB updated to 16Mar2013                         |
+| 1.0     | 19Dec2012 | Initial release                                                                         |
 
 5. Credits
 -------------
