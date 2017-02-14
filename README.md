@@ -33,7 +33,7 @@ And CASC will be cloned to your working directory.
 2. Installing CASC and its Dependencies
 ----------------------------------------
 
-##### Installing CASC system-wide
+#### Installing CASC system-wide
 
 If you have sudo acces you can install CASC easily:
 
@@ -44,7 +44,7 @@ make test
 sudo make install
 ```
 
-##### Installing CASC locally
+#### Installing CASC locally
 
 If you would like to install CASC without sudo:
 
@@ -68,12 +68,12 @@ Of course, you need to replace "/Path/to/where/to/install" with
 where you actually installed it ;)
 
 
-### CASC HAS ONLY ONE DEPENDENCY, and it's BLAST. You will need to have a local copy of BLAST installed on your machine, and have its location in your PATH. ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
+### CASC HAS ONLY ONE EXTERNAL DEPENDENCY, and it's BLAST. You will need to have a local copy of BLAST installed on your machine, and have its location in your PATH. ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 
 Assuming you have Perl installed on your machine (and BLAST) you need only
 to execute the following command to display CASC's help / usage:
 
-    ./CASC --help
+    casc --help
 
 3. Using CASC to Find CRISPRs
 ------------------------------
