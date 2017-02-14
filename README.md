@@ -103,7 +103,7 @@ with the most up-to-date versions of UniRef and CRISPR DB:
 
 | Version | Date      | Notes                                                                                   |
 |:-------:|:---------:|:----------------------------------------------------------------------------------------|
-| 2.6     | 14Feb2017 | Now uses Make::Maker for installation; Various improvements to results reporting        |
+| 2.6     | 14Feb2017 | Now uses MakeMaker for installation; Various improvements to results reporting          |
 | 2.5     | 29Sep2015 | UniRef DB updated to 29Sep2015; various bug fixes                                       |
 | 2.4     | 07Oct2014 | CRISPR DB updated to  07Oct2014; UniRef DB updated to 07Oct2014; added -silent argument |
 | 2.3     | 17Feb2014 | CRISPR DB updated to  17Feb2014; UniRef DB updated to 17Feb2014; added -v argument      |
