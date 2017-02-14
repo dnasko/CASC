@@ -7,9 +7,9 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION     = 1.00;
 @ISA         = qw(Exporter);
 @EXPORT      = ();
-@EXPORT_OK   = qw(dateTime count_seqs split_multifasta get_basename roundup run_mCRT extract_headers extract_seqs);
+@EXPORT_OK   = qw(dateTime count_seqs split_multifasta get_basename roundup run_mCRT extract_headers extract_seqs btab2lookup mean_std rounddown Round);
 %EXPORT_TAGS = ( DEFAULT => [qw(&dateTime)],
-                 Both    => [qw(&dateTime &count_seqs &split_multifasta &get_basename &roundup &run_mCRT &extract_headers &extract_seqs)]);
+                 Both    => [qw(&dateTime &count_seqs &split_multifasta &get_basename &roundup &run_mCRT &extract_headers &extract_seqs &btab2lookup &mean_std &rounddown &Round)]);
 
 sub dateTime
 {
@@ -71,6 +71,17 @@ sub roundup
 {
     my $n = shift;
     return(($n == int($n)) ? $n : int($n + 1))
+}
+sub rounddown
+{
+    my $n = shift;
+    return(int($n));
+}
+sub Round
+{       my $number = $_[0];
+        my $digits = $_[1];
+        $number = (rounddown(((10**$digits) * $number) + 0.5))/10**$digits;
+        return $number;
 }
 
 sub run_mCRT
@@ -145,6 +156,34 @@ sub extract_seqs
     if ($expecting != $found_seqs) { print "\n!==> Warning, expected to extract $expecting sequences, but only extracted $found_seqs sequences <==!\n"; }
 }
 
+sub btab2lookup
+{
+    my $infile = $_[0];
+    my $outfile = $_[1];
+    my %SeenBefore;
+    open(OUT,">$outfile") || die "\n Cannot write to outfile $outfile\n";
+    open(IN,"<$infile") || die "\n Cannot open the file: $infile\n";
+    while(<IN>) {
+	chomp;
+	my @a = split(/\t/, $_);
+	if ($a[0] =~ m/-repeat-/) {
+	    $a[0] =~ s/-repeat-/-spacer-/;
+	    unless (exists $SeenBefore{$a[0]}) {
+		print OUT $a[0] . "\n";
+	    }
+	    $SeenBefore{$a[0]} = 1;
+	}
+	else {
+	    unless (exists $SeenBefore{$a[0]}) {
+		print OUT $a[0] . "\t" . $a[1] . "\n";
+	    }
+	    $SeenBefore{$a[0]} = 1;
+	}
+    }
+    close(IN);
+    close(OUT);
+}
+
 sub clean_header
 {
     my $s = $_[0];
@@ -152,6 +191,24 @@ sub clean_header
     $s =~ s/ .*//;
     $s =~ s/-spacer-\d+-\d+//;
     return $s;
+}
+
+sub mean_std
+{
+    my $s = $_[0];
+    my @S = split(/,/, $s);
+    my $sum = 0;
+    foreach my $i (@S) {
+        $sum += $i;
+    }
+    my $mean = $sum / scalar(@S);
+
+    my $sqtotal = 0;
+    foreach my $i (@S) {
+        $sqtotal += ($mean-$i) ** 2;
+    }
+    my $std = ($sqtotal / (scalar(@S)-1)) ** 0.5;
+    return($mean,$std,scalar(@S));
 }
 
 sub task

@@ -19,22 +19,45 @@ sub report
     my $status = $_[0];
     my $outdir = $_[1];
     if ($status eq "start") {
+	my $commandline = $_[2];
+	my $mode = "Liberal";
+	if ($commandline =~ m/--conservative/) { $mode = "Conservative";}
 	open(REP, "|-", "tee $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
-	my $commandline = $0 . " ". (join " ", @ARGV);
 	my $abs_path = abs_path($outdir);
 	print REP "Commandline: $commandline\n\n";
-	print REP "Output Directory: $abs_path\n\n";
+	print REP "Output Directory: $abs_path\n";
+	print REP "Mode: $mode\n\n";
 	print REP "===== CASC Started. Log can be found here: " . $abs_path . "/casc.log\n\n";
 	close(REP);
     }
     elsif ($status eq "split_fasta") {
 	open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
-	print REP "== Spliting the FASTA file ................. ";
+	print REP "== Spliting the FASTA file ...................... ";
 	close(REP);
     }
     elsif ($status eq "mCRT") {
 	open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
-        print REP "== Running mCRT to find putative spacers ... ";
+        print REP "== Running mCRT to find putative spacers ........ ";
+        close(REP);
+    }
+    elsif ($status eq "extraction") {
+	open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
+        print REP "== Extracting sequences with putative spacers ... ";
+        close(REP);
+    }
+    elsif ($status eq "blastn") {
+        open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
+        print REP "== Comparing putative repeats against the repeat database ... ";
+        close(REP);
+    }
+    elsif ($status eq "blastx") {
+        open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
+        print REP "== Searching for Cas proteins ... ";
+        close(REP);
+    }
+    elsif ($status eq "reporting") {
+        open(REP, "|-", "tee -a $outdir/casc.log") || die "\n ERROR: Cannot open the log file: $outdir/casc.log\n";
+        print REP "== Gathering and printing results ... ";
         close(REP);
     }
     elsif ($status eq "done") {

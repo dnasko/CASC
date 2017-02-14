@@ -98,6 +98,7 @@ use Getopt::Long;
 use File::Basename;
 use Pod::Usage;
 
+use Cwd 'abs_path';
 use threads;
 use CASC::Reporting qw(:Both);
 use CASC::Utilities qw(:Both);
@@ -147,7 +148,10 @@ $ncpus = check_threads($number_of_seqs, $ncpus);
 
 ## Setup the output working area
 initialize_outdir_tree($outdir);
-report('start',$outdir);
+my $user_input = $0 . " -i " . abs_path($infile) ." -o " . abs_path($outdir) . " -n $ncpus";
+if ($conservative) { $user_input = $user_input . " --conservative"; }
+if ($debug) { $user_input = $user_input . " --debug"; }
+report('start',$outdir, $user_input);
 
 ## Split the FASTA up
 report('split_fasta',$outdir);
@@ -164,8 +168,48 @@ if ($putative_spacers == 0) {
 }
 
 ## Extract the sequences contianing putative spacers
+report('extraction', $outdir);
 my %SpacerContainingSeqs = extract_headers("$outdir/component_processes/mCRT/" . get_basename($infile) . ".spacer.fsa");
 extract_seqs($infile,"$outdir/component_processes/extract_sequence/spacer_containing_seqs.fasta",%SpacerContainingSeqs);
+report('done', $outdir);
+
+## Check the number of sequences we have extracted
+($number_of_seqs, $number_of_bases) = count_seqs("$outdir/component_processes/extract_sequence/spacer_containing_seqs.fasta");
+$ncpus = check_threads($number_of_seqs, $ncpus);
+
+## Repeat BLASTn
+report('blastn', $outdir);
+my $blastn_string = "para_blastn.pl " .
+    "-q $outdir/component_processes/mCRT/" . get_basename($infile) . ".repeat.fsa " .
+    "-d $RepeatDB " .
+    "-o $outdir/component_processes/blastn/" . get_basename($infile) . ".btab " .
+    " -e 1e-5 -t $ncpus > $outdir/component_processes/blastn/para_blastn.log 2>&1";
+print `$blastn_string`;
+btab2lookup("$outdir/component_processes/blastn/" . get_basename($infile) . ".btab", "$outdir/component_processes/bonafide_lookup/" . get_basename($infile) . ".repeat.lookup");
+report('done', $outdir);
+
+## Cas BLASTx
+report('blastx', $outdir);
+my $blastx_string = "para_blastx.pl " .
+    "-q $outdir/component_processes/extract_sequence/spacer_containing_seqs.fasta " .
+    "-d $UniRefDB " .
+    "-o $outdir/component_processes/blastx/" . get_basename($infile) . ".btab " .
+    " -e 1e-12 -t $ncpus > $outdir/component_processes/blastx/para_blastx.log 2>&1";
+print `$blastx_string`;
+btab2lookup("$outdir/component_processes/blastx/" . get_basename($infile) . ".btab", "$outdir/component_processes/bonafide_lookup/" . get_basename($infile) . ".cas.lookup");
+report('done', $outdir);
+
+## Gather and print results
+report('reporting', $outdir);
+my $report_exe = "casc_report_gen.pl -x " . "$outdir/component_processes/bonafide_lookup/" . get_basename($infile) . ".cas.lookup" 
+    . " -n " . "$outdir/component_processes/bonafide_lookup/" . get_basename($infile) . ".repeat.lookup" 
+    . " -c " . "$outdir/component_processes/mCRT/" . get_basename($infile) . ".raw " 
+    . " -s " . "$outdir/component_processes/mCRT/" . get_basename($infile) . ".spacer.fsa " 
+    . " -r " . "$outdir/component_processes/mCRT/" . get_basename($infile) . ".repeat.fsa "
+    . "-o $outdir -i $infile --stats=\"$number_of_bases,$number_of_seqs\"";
+if ($conservative) {$report_exe = $report_exe . " --conservative"}
+print `$report_exe`;
+report('done', $outdir);
 
 ## All Done Everything
 report('all_done', $outdir);

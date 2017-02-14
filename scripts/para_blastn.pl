@@ -116,6 +116,9 @@ my @chars = ("A".."Z", "a".."z");
 my $rand_string;
 $rand_string .= $chars[rand @chars] for 1..8;
 my $tmp_file = "./$program" . "_tmp_" . $rand_string;
+my $root = abs_path($0);
+$root =~ s/para_blastn.pl//;
+$db = $root . $db;
 
 ## Check that blastn and makeblastdb are installed on this machine
 my $PROG = `which $program`; unless ($PROG =~ m/$program/) { die "\n\n ERROR: External dependency '$program' not installed in system PATH\n\n (ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/)\n\n";}
