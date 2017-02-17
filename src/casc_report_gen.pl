@@ -204,10 +204,10 @@ while(<IN>) {
     else {
 	my ($base,$array_no) = parse_header($h);
 	if (exists $Bonafide{$base}{$array_no}) {
-	    print BON $h . "\t" . $_ . "\n";
+	    print BON $h . "\n" . $_ . "\n";
 	}
 	else {
-	    print NBON $h . "\t" . $_ . "\n";
+	    print NBON $h . "\n" . $_ . "\n";
 	}
     }
 }
@@ -226,10 +226,10 @@ while(<IN>) {
     else {
 	my ($base,$array_no) = parse_header($h);
     	if (exists $Bonafide{$base}{$array_no}) {
-            print BON $h . "\t"	. $_ . "\n";
+            print BON $h . "\n"	. $_ . "\n";
         }
         else {
-            print NBON $h . "\t" . $_ . "\n";
+            print NBON $h . "\n" . $_ . "\n";
 	}
     }
 }
