@@ -95,11 +95,11 @@ CRISPRs conservatively:
 casc -i /Path/to/TestSeqs.nuc.fasta -o NewOutput -n 4 --conservative
 ```
 
-#### CASC "*.results.txt" file
+#### The CASC "*.results.txt" file
 
 The results.txt file provides useful results for each array found. The fields are
 pretty self explanatory. Well, all but one. The final field, "code" is a bit cryptic.
-It is a single digit integer (between 0-7) that codifies certain results below:
+It is a single digit integer (between 0-7) that codifies certain results, shown below:
 
 | Code | (Binary) | Cas Protein Hit | Matches Known Repeat | Proper Statistics |
 |:----:|:--------:|:---------------:|:--------------------:|:-----------------:|
