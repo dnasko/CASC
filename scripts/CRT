@@ -1,0 +1,8 @@
+#!/bin/sh
+
+infile=$1
+outfile=$2
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+java -jar -Xms128M -Xmx10240M ${DIR}/CRT1.2b.jar ${infile} ${outfile}
+
+# java -jar -Xms128M -Xmx10240M $script_working_dir/casc_bin/CRT1.2b.jar $file $outdir/component_processes/mCRT/$mod_file.raw
