@@ -103,7 +103,14 @@ It is a single digit integer (between 0-7) that codifies certain results below:
 
 | Code | (Binary) | Cas Protein Hit | Matches Known Repeat | Proper Statistics |
 |:----:|:--------:|:---------------:|:--------------------:|:-----------------:|
-|   0  |   000    |       no        |          no          |        no         |
+|  0   |   000    |       no        |          no          |        no         |
+|  1   |   001    |       no        |          no          |       Yes         |
+|  2   |   010    |       no        |         Yes          |        no         |
+|  3   |   011    |       no        |         Yes          |       Yes         |
+|  4   |   100    |      Yes        |          no          |        no         |
+|  5   |   101    |      Yes        |          no          |       Yes         |
+|  6   |   110    |      Yes        |         Yes          |        no         |
+|  7   |   111    |      Yes        |         Yes          |       Yes         |
 
 
 4. Version History
