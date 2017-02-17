@@ -138,7 +138,7 @@ my $RepeatDB = "RepeatDB_07Oct2014";      ## CRISPR DB Version
 blast_check();
 
 ## Check that CASC scripts are installed and in PATH
-my @casc_scripts = ('CRT', 'para_blastn.pl', 'para_blastx.pl', 'spacer_report_gen.pl', 'splitFASTA.pl');
+my @casc_scripts = ('CRT', 'para_blastn.pl', 'para_blastx.pl', 'casc_report_gen.pl', 'splitFASTA.pl');
 foreach my $script (@casc_scripts) { script_check($script); }
 
 ## Check that the input FASTA is a Nucleotide FASTA
