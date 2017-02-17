@@ -130,6 +130,7 @@ my %Blastn;
 my %Blastn2;
 my %Bonafide;
 my $nstats = 0;
+my $nbonafide = 0;
 
 open(IN,"<$blastx") || die "\n Cannot open the blastx file: $blastx\n";
 while(<IN>) {
@@ -187,7 +188,7 @@ foreach my $i (@Order) {
 	$SpacerStats{$root}{$array_no}{'avg'} . "\t" . 
 	$SpacerStats{$root}{$array_no}{'std'} . "\t" . 
 	$valid .  "\t" . bin2dec($code) . "\n";
-    if ($valid eq "true") { $Bonafide{$root}{$array_no} = 1; }
+    if ($valid eq "true") { $Bonafide{$root}{$array_no} = 1; $nbonafide++;}
 }
 close(OUT);
 
@@ -243,7 +244,6 @@ my $mode = "Liberal";
 if ($conservative) {$mode = "Conservative"; }
 my @Stats = split(/,/, $stats);
 my $mean_read = Round($Stats[0] / $Stats[1], 0);
-my $nbonafide = keys %Bonafide;
 my $ncas = keys %Blastx;
 my $nrepeat = keys %Blastn2;
 my $narrays = keys %ArrayPositions;
