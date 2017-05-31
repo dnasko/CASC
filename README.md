@@ -26,7 +26,7 @@ output seven files:
 
 To download, simply clone the CASC repository from GitHub. From the commandline type:
 
-`$ git clone git@github.com:dnasko/CASC.git`
+`$ git clone https://github.com/dnasko/CASC.git`
 
 And CASC will be cloned to your working directory.
 
