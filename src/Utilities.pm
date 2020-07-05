@@ -198,6 +198,10 @@ sub mean_std
     my $s = $_[0];
     my @S = split(/,/, $s);
     my $sum = 0;
+    if (scalar(@S) == 1) {
+	## If only one array found, return stddev of 1
+	return($S[0], 0, 1);
+    }
     foreach my $i (@S) {
         $sum += $i;
     }
